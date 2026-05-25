@@ -68,49 +68,54 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none"
-              placeholder="Your full name"
+              className="w-full border-2 border-gray-200 p-3 rounded-xl text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
+              placeholder="Your Full Name"
               value={form.primary_name}
               onChange={(e) => setForm({ ...form, primary_name: e.target.value })}
               required
             />
+
             <input
-              className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none"
-              placeholder="contact number"
+              className="w-full border-2 border-gray-200 p-3 rounded-xl text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
+              placeholder="Contact Number"
               value={(form as any).contact || ''}
               onChange={(e) => setForm({ ...form, contact: e.target.value })}
               required
             />
+
             <input
               type="date"
-              className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none"
+              className="w-full border-2 border-gray-200 p-3 rounded-xl text-black focus:border-indigo-500 outline-none"
               value={form.dob}
               onChange={(e) => setForm({ ...form, dob: e.target.value })}
               required
             />
+
             <input
               type="email"
-              className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none"
+              className="w-full border-2 border-gray-200 p-3 rounded-xl text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
               placeholder="Your email (optional)"
               value={form.primary_email}
               onChange={(e) => setForm({ ...form, primary_email: e.target.value })}
             />
+
             <input
-              className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none"
-              placeholder="Spouse name (optional)"
+              className="w-full border-2 border-gray-200 p-3 rounded-xl text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
+              placeholder="Spouse Name (optional)"
               value={form.spouse_name}
               onChange={(e) => setForm({ ...form, spouse_name: e.target.value })}
             />
+
             <input
               type="email"
-              className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-indigo-500 outline-none"
+              className="w-full border-2 border-gray-200 p-3 rounded-xl text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
               placeholder="Spouse email (optional)"
               value={(form as any).spouse_email || ''}
               onChange={(e) => setForm({ ...form, spouse_email: e.target.value })}
             />
 
-
             {error && <p className="text-red-500 text-sm">{error}</p>}
+
             <button
               type="submit"
               disabled={isSubmitting}

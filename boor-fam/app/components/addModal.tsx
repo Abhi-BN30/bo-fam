@@ -41,10 +41,10 @@ export default function AddModal({ onClose, onRefresh, parentId = null }: AddMod
         <h2 className="text-xl font-bold mb-4">Add User</h2>
         <form onSubmit={submit} className="space-y-3">
           <input className="w-full border p-2 rounded" placeholder="Full name" required value={form.primary_name} onChange={e => setForm({ ...form, primary_name: e.target.value })} />
-          <input className="w-full border p-2 rounded" placeholder="contact number" required value={form.contact} onChange={e => setForm({ ...form, contact: e.target.value })} />
-          <input className="w-full border p-2 rounded" placeholder="Date of birth" type="date" required value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} />
+          <input className="w-full border p-2 rounded" placeholder="Contact number" required value={form.contact} onChange={e => setForm({ ...form, contact: e.target.value })} />
+          <input className="w-full border p-2 rounded" placeholder="Date of Birth" type="date" required value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} />
           <input className="w-full border p-2 rounded" placeholder="Primary email" type="email" value={form.primary_email} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
-          <input className="w-full border p-2 rounded" placeholder="Spouse name" value={form.spouse_name} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
+          <input className="w-full border p-2 rounded" placeholder="Spouse Name" value={form.spouse_name} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
           <input className="w-full border p-2 rounded" placeholder="Spouse email" type="email" value={form.spouse_email} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
 
 
