@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import FamilyTree, { TreeNode } from '../components/familyTree';
 import AddModal from '../components/addModal';
 import UserModal from '../components/userModal';
+import SetupModal from '../components/setupModal';
 
 export default function Home() {
   const [treeRoots, setTreeRoots] = useState<TreeNode[]>([]);
@@ -14,6 +15,7 @@ export default function Home() {
   const [selectedUser, setSelectedUser] = useState<Record<string, any> | null>(null);
   const [session, setSession] = useState<Record<string, any> | null>(null);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
+  const [showSetupModal, setShowSetupModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -64,9 +66,45 @@ export default function Home() {
     try {
       const res = await fetch('/api/tree');
       const data = await res.json();
-      setTreeRoots(buildTree(data));
+      const tree = buildTree(data);
+      setTreeRoots(tree);
+      
+      // Check if current user is in the tree
+      if (session?.id) {
+        const isInTree = tree.some(root => isUserInTree(root, session.id));
+        if (!isInTree && data.length > 0) {
+          // User exists but not in tree, show setup
+          setShowSetupModal(true);
+        }
+      }
     } catch (err) {
       console.error('Failed to load:', err);
+    }
+  };
+
+  const isUserInTree = (node: TreeNode, userId: number): boolean => {
+    if (node.id === userId) return true;
+    if (node.children) {
+      return node.children.some(child => isUserInTree(child, userId));
+    }
+    return false;
+  };
+
+  const handleReorder = async (parentId: number, updates: Array<{ user_id: number; order: number }>) => {
+    try {
+      const res = await fetch('/api/tree/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to reorder');
+      }
+
+      await loadData();
+    } catch (err) {
+      console.error('Failed to reorder:', err);
     }
   };
 
@@ -150,7 +188,7 @@ export default function Home() {
         </section>
 
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40">
-          <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} />
+          <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} />
         </section>
       </main>
 
@@ -170,6 +208,16 @@ export default function Home() {
           mode={userModalMode}
           initialData={selectedUser}
           onEditRequested={() => setUserModalMode('edit')}
+        />
+      )}
+
+      {showSetupModal && session && (
+        <SetupModal
+          isOpen={showSetupModal}
+          currentUser={session}
+          onClose={() => setShowSetupModal(false)}
+          onSkip={() => setShowSetupModal(false)}
+          onRefresh={handleRefresh}
         />
       )}
     </div>

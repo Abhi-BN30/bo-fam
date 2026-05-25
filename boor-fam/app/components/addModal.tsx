@@ -7,7 +7,7 @@ interface AddModalProps {
 }
 
 export default function AddModal({ onClose, onRefresh, parentId = null }: AddModalProps) {
-  const [form, setForm] = useState({ primary_name: '', spouse_name: '', primary_email: '', spouse_email: '', contact: '', dob: '', profile_pic_url: '', parent_id: parentId });
+  const [form, setForm] = useState({ primary_name: '', spouse_name: '', primary_email: '', spouse_email: '', contact: '', dob: '', parent_id: parentId });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -46,7 +46,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null }: AddMod
           <input className="w-full border p-2 rounded" placeholder="Primary email" type="email" value={form.primary_email} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
           <input className="w-full border p-2 rounded" placeholder="Spouse name" value={form.spouse_name} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
           <input className="w-full border p-2 rounded" placeholder="Spouse email" type="email" value={form.spouse_email} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
-          <input className="w-full border p-2 rounded" placeholder="Profile image URL" value={form.profile_pic_url} onChange={e => setForm({ ...form, profile_pic_url: e.target.value })} />
+
 
           <div className="flex gap-2 mt-4">
             <button type="button" onClick={onClose} className="bg-gray-200 px-4 py-2 rounded">Cancel</button>

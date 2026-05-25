@@ -5,7 +5,6 @@ interface CoupleNodeData {
   id: number;
   primary_name: string;
   spouse_name: string;
-  profile_pic_url?: string;
   // optional callbacks passed in node data
   onShow?: (id: number) => void;
   onAdd?: (parentId: number) => void;
@@ -29,7 +28,6 @@ export default function CoupleNode({ data }: CoupleNodeProps) {
   return (
     <div onClick={handleShow} className="cursor-pointer bg-white border-2 border-indigo-500 rounded-xl p-4 shadow-lg min-w-[200px] text-center hover:scale-105 transition-transform">
       <Handle type="target" position={Position.Top} />
-      {data.profile_pic_url && <Image src={data.profile_pic_url} alt={`${data.primary_name} profile`} className="w-12 h-12 rounded-full mx-auto mb-2" width={48} height={48} />}
       <div className="font-bold text-indigo-900">{data.primary_name}{data.spouse_name ? ` & ${data.spouse_name}` : ''}</div>
       <div className="mt-2 flex justify-center">
         <button onClick={handleAdd} className="text-sm bg-green-500 text-white px-3 py-1 rounded-full">Add user</button>

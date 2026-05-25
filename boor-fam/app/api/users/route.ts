@@ -4,9 +4,9 @@ import { NextResponse } from 'next/server';
 const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(req: Request) {
-  const { primary_name, spouse_name, primary_email, dob, profile_pic_url, parent_id, contact, spouse_email } = await req.json();
-  const res = await sql`INSERT INTO users (primary_name, spouse_name, primary_email, dob, profile_pic_url, contact, spouse_email) 
-    VALUES (${primary_name}, ${spouse_name}, ${primary_email}, ${dob}, ${profile_pic_url}, ${contact}, ${spouse_email}) RETURNING id`;
+  const { primary_name, spouse_name, primary_email, dob, parent_id, contact, spouse_email } = await req.json();
+  const res = await sql`INSERT INTO users (primary_name, spouse_name, primary_email, dob, contact, spouse_email) 
+    VALUES (${primary_name}, ${spouse_name}, ${primary_email}, ${dob}, ${contact}, ${spouse_email}) RETURNING id`;
   if (parent_id) await sql`INSERT INTO family_tree (user_id, parent_id) VALUES (${res[0].id}, ${parent_id})`;
   return NextResponse.json({ id: res[0].id });
 }
@@ -19,13 +19,13 @@ export async function DELETE(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const { id, primary_name, spouse_name, dob, profile_pic_url, contact, spouse_email, primary_email } = await req.json();
+  const { id, primary_name, spouse_name, dob, contact, spouse_email, primary_email } = await req.json();
 
   if (!id) {
     return NextResponse.json({ error: 'missing id' }, { status: 400 });
   }
 
-  const result = await sql`UPDATE users SET primary_name=${primary_name}, spouse_name=${spouse_name}, dob=${dob}, profile_pic_url=${profile_pic_url}, contact=${contact}, spouse_email=${spouse_email}, primary_email=${primary_email} WHERE id=${id} RETURNING *`;
+  const result = await sql`UPDATE users SET primary_name=${primary_name}, spouse_name=${spouse_name}, dob=${dob}, contact=${contact}, spouse_email=${spouse_email}, primary_email=${primary_email} WHERE id=${id} RETURNING *`;
 
   return NextResponse.json(result[0] || null);
 }

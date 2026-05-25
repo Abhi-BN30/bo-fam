@@ -92,13 +92,13 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl w-96 shadow-2xl">
         <h2 className="text-xl font-bold mb-4">{mode === 'edit' ? 'Edit User' : mode === 'add' ? 'Add User' : 'User details'}</h2>
 
-        <input className="w-full border p-2 mb-2 rounded" placeholder="Full name" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
-        <input className="w-full border p-2 mb-2 rounded" placeholder="contact" value={form.contact || ''} onChange={e => setForm({ ...form, contact: e.target.value })} required />
-        <input className="w-full border p-2 mb-2 rounded" type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })} required />
-        <input className="w-full border p-2 mb-2 rounded" placeholder="Primary email" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
-        <input className="w-full border p-2 mb-2 rounded" placeholder="Spouse name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
-        <input className="w-full border p-2 mb-2 rounded" placeholder="Spouse email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
-        <input className="w-full border p-2 mb-2 rounded" placeholder="Profile Pic URL" value={form.profile_pic_url || ''} onChange={e => setForm({ ...form, profile_pic_url: e.target.value })} />
+        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Full name" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
+        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="contact" value={form.contact || ''} onChange={e => setForm({ ...form, contact: e.target.value })} required />
+        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })} required />
+        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Primary email" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
+        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Spouse name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
+        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Spouse email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
+
 
         {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
 

@@ -5,9 +5,10 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   const sql = neon(process.env.DATABASE_URL!);
   const data = await sql`
-    SELECT u.id, u.primary_name, u.spouse_name, t.parent_id 
+    SELECT u.id, u.primary_name, u.spouse_name, t.parent_id, t."order"
     FROM users u 
-    LEFT JOIN family_tree t ON u.id = t.user_id
+    INNER JOIN family_tree t ON u.id = t.user_id
+    ORDER BY t.parent_id, t."order"
   `;
   return NextResponse.json(data);
 }
