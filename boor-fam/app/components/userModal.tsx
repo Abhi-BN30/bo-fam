@@ -88,37 +88,38 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
 
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl w-96 shadow-2xl">
-        <h2 className="text-xl font-bold mb-4">{mode === 'edit' ? 'Edit User' : mode === 'add' ? 'Add User' : 'User details'}</h2>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-3 sm:p-4">
+      <form onSubmit={handleSubmit} className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl w-full max-w-sm sm:max-w-md shadow-2xl max-h-[90vh] overflow-auto">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-5 md:mb-6 text-slate-900">{mode === 'edit' ? 'Edit User' : mode === 'add' ? 'Add User' : 'User details'}</h2>
 
-        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Full name" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
-        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Contact" value={form.contact || ''} onChange={e => setForm({ ...form, contact: e.target.value })} required />
-        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })} required />
-        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Primary email" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
-        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Spouse Name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
-        <input disabled={mode === 'view'} className={`w-full border p-2 mb-2 rounded ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed' : ''}`} placeholder="Spouse email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
+        <div className="space-y-3">
+          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Full name" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
+          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Contact" value={form.contact || ''} onChange={e => setForm({ ...form, contact: e.target.value })} required />
+          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })} required />
+          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Primary email" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
+          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Spouse Name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
+          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Spouse email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
+        </div>
 
+        {error && <p className="text-red-500 text-xs sm:text-sm mt-3 sm:mt-4">{error}</p>}
 
-        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-
-        <div className="flex gap-2 mt-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-5 sm:mt-6 md:mt-8">
           {mode === 'edit' ? (
             <>
-              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 p-2 rounded">Cancel</button>
-              <button type="button" onClick={handleDelete} className="bg-red-500 text-white p-2 rounded">Delete</button>
-              <button type="submit" className="bg-indigo-600 text-white p-2 rounded">Save</button>
+              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition order-3 sm:order-1">Cancel</button>
+              <button type="button" onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-2 sm:order-2">Delete</button>
+              <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-1 sm:order-3">Save</button>
             </>
           ) : mode === 'add' ? (
             <>
-              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 p-2 rounded">Cancel</button>
-              <button type="submit" className="bg-indigo-600 text-white p-2 rounded">Create</button>
+              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition">Cancel</button>
+              <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition">Create</button>
             </>
           ) : (
             <>
-              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 p-2 rounded">Close</button>
-              <button type="button" onClick={() => { if (typeof onEditRequested === 'function') onEditRequested(); }} className="bg-yellow-500 text-white p-2 rounded">Edit</button>
-              <button type="button" onClick={handleDelete} className="bg-red-500 text-white p-2 rounded">Delete</button>
+              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition order-3 sm:order-1">Close</button>
+              <button type="button" onClick={() => { if (typeof onEditRequested === 'function') onEditRequested(); }} className="bg-yellow-500 hover:bg-yellow-600 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-1 sm:order-2">Edit</button>
+              <button type="button" onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-2 sm:order-3">Delete</button>
             </>
           )}
         </div>
