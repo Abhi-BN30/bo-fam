@@ -30,7 +30,7 @@ export default function CoupleNode({ data }: CoupleNodeProps) {
       <Handle type="target" position={Position.Top} />
       <div className="font-bold text-indigo-900">{data.primary_name}{data.spouse_name ? ` & ${data.spouse_name}` : ''}</div>
       <div className="mt-2 flex justify-center">
-        <button onClick={handleAdd} className="text-sm bg-green-500 text-white px-3 py-1 rounded-full">Add user</button>
+        <button onClick={handleAdd} className="text-sm bg-green-500 text-white px-3 py-1 rounded-full">Add Member</button>
       </div>
       <Handle type="source" position={Position.Bottom} />
     </div>

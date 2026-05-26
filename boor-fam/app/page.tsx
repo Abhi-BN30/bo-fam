@@ -17,7 +17,7 @@ export default function WelcomePage() {
       <div className="max-w-2xl w-full bg-white shadow-2xl rounded-3xl p-10">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-indigo-900 mb-4">Welcome to The Boorlagadda's</h1>
-          <p className="text-gray-600 text-lg">Log in to view your family tree or create a new family profile to get started.</p>
+          <p className="text-gray-600 text-lg">Log in to view our family tree or create your account to get started</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -32,7 +32,7 @@ export default function WelcomePage() {
             onClick={() => router.push('/register')}
             className="rounded-3xl border border-indigo-600 text-indigo-700 py-5 text-lg font-semibold hover:bg-indigo-50 transition"
           >
-            Create Profile
+            Create Account
           </button>
         </div>
       </div>

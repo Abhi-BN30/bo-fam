@@ -35,7 +35,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-indigo-50 px-4">
       <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md">
         <h1 className="text-3xl font-bold text-indigo-900 mb-6">Family Portal</h1>
-        <p className="text-gray-600 mb-6">Enter your registered email to access the family tree.</p>
+        <p className="text-gray-600 mb-6">Enter your registered email to access our family page.</p>
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
@@ -46,11 +46,11 @@ export default function LoginPage() {
           />
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button type="submit" className="w-full bg-indigo-600 text-white p-3 rounded-xl font-bold hover:bg-indigo-700 transition">
-            Access My Family
+            Click here to access our family
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-gray-600">
-          New here? <button onClick={() => router.push('/register')} className="text-indigo-600 underline">Create a profile</button>
+          New here? <button onClick={() => router.push('/register')} className="text-indigo-600 underline">Create your Profile</button>
         </p>
       </div>
     </div>

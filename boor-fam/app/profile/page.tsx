@@ -4,18 +4,19 @@ import { useRouter } from 'next/navigation';
 import FamilyTree, { TreeNode } from '../components/familyTree';
 import AddModal from '../components/addModal';
 import UserModal from '../components/userModal';
-import SetupModal from '../components/setupModal';
+import ChoiceModal from '../components/choiceModal';
 
 export default function Home() {
   const [treeRoots, setTreeRoots] = useState<TreeNode[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addParentId, setAddParentId] = useState<number | null>(null);
+  const [addMode, setAddMode] = useState<'add-new' | 'add-self'>('add-new');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [userModalMode, setUserModalMode] = useState<'view' | 'edit' | 'add'>('view');
   const [selectedUser, setSelectedUser] = useState<Record<string, any> | null>(null);
   const [session, setSession] = useState<Record<string, any> | null>(null);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
-  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [showChoiceModal, setShowChoiceModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,8 +29,33 @@ export default function Home() {
     setIsSessionLoaded(true);
   }, [router]);
 
+  const countAllNodes = (nodes: TreeNode[]): number => {
+    let count = 0;
+    nodes.forEach(node => {
+      count += 1;
+      if (node.children && node.children.length > 0) {
+        count += countAllNodes(node.children);
+      }
+    });
+    return count;
+  };
+
   const openAddModal = (parentId: number | null = null) => {
     setAddParentId(parentId);
+    if (parentId !== null && treeRoots.length > 0) {
+      setShowChoiceModal(true);
+    } else if (parentId === null && treeRoots.length === 0) {
+      setAddMode('add-new');
+      setIsAddModalOpen(true);
+    } else {
+      setAddMode('add-new');
+      setIsAddModalOpen(true);
+    }
+  };
+
+  const handleChoiceSelect = (mode: 'add-self' | 'add-new') => {
+    setAddMode(mode);
+    setShowChoiceModal(false);
     setIsAddModalOpen(true);
   };
 
@@ -68,26 +94,9 @@ export default function Home() {
       const data = await res.json();
       const tree = buildTree(data);
       setTreeRoots(tree);
-      
-      // Check if current user is in the tree
-      if (session?.id) {
-        const isInTree = tree.some(root => isUserInTree(root, session.id));
-        if (!isInTree && data.length > 0) {
-          // User exists but not in tree, show setup
-          setShowSetupModal(true);
-        }
-      }
     } catch (err) {
       console.error('Failed to load:', err);
     }
-  };
-
-  const isUserInTree = (node: TreeNode, userId: number): boolean => {
-    if (node.id === userId) return true;
-    if (node.children) {
-      return node.children.some(child => isUserInTree(child, userId));
-    }
-    return false;
   };
 
   const handleReorder = async (parentId: number, updates: Array<{ user_id: number; order: number }>) => {
@@ -132,28 +141,30 @@ export default function Home() {
 
   if (!isSessionLoaded) return null;
 
+  const familyCount = countAllNodes(treeRoots);
+
   return (
     <div className="min-h-screen w-screen bg-slate-50 text-slate-900">
       <header className="fixed inset-x-0 top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-indigo-600">Family Tree</p>
-            <h1 className="text-3xl font-semibold text-slate-900">The Boorlagadda's</h1>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-5 flex-col sm:flex-row">
+          <div>            
+            <h1 className="text-xl sm:text-3xl font-semibold text-slate-900">The Boorlagadda's</h1>
+            <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-600">Family Tree</p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-slate-200 bg-white px-3 sm:px-4 py-2 shadow-sm text-xs sm:text-sm flex-wrap justify-end sm:justify-start">
             {session ? (
-              <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
-                <div className="text-sm">
+              <>
+                <div className="text-xs sm:text-sm">
                   <div className="font-semibold text-slate-900">{session.primary_name}</div>
                   <div className="text-xs text-slate-500">{session.spouse_name ? `${session.spouse_name} • ` : ''}{session.primary_email}</div>
                 </div>
-                <button onClick={logout} className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600">
+                <button onClick={logout} className="rounded-full bg-rose-500 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-rose-600 whitespace-nowrap">
                   Logout
                 </button>
-              </div>
+              </>
             ) : (
-              <button onClick={() => router.push('/login')} className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
+              <button onClick={() => router.push('/login')} className="rounded-full bg-indigo-600 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-indigo-700">
                 Login
               </button>
             )}
@@ -161,42 +172,54 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 pb-20 pt-36">
-        <section className="mb-10 grid gap-6 lg:grid-cols-[1.9fr_1fr]">
-          <div className="rounded-[2rem] bg-white p-8 shadow-xl shadow-slate-200/50">
-            <p className="text-sm font-medium uppercase tracking-[0.35em] text-indigo-600">Tree view</p>
-            <h2 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900">Your family tree in a cleaner, faster layout.</h2>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-              Tap any family member to open details, add children directly from the card, and enjoy a polished tree presentation without the clutter of a graph editor.
+      <main className="mx-auto max-w-7xl px-3 sm:px-6 pb-12 sm:pb-20 pt-28 sm:pt-36">
+        <section className="mb-6 sm:mb-10 grid gap-4 sm:gap-6 lg:grid-cols-[1.9fr_1fr]">
+          <div className="rounded-lg sm:rounded-[2rem] bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/50">
+            <h1 className="mt-1 text-2xl sm:text-3xl font-medium uppercase tracking-[0.35em] text-indigo-600">The Home</h1>
+            <p className="mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base leading-7 text-slate-600">
+              Born a boorlagadda and aren't sure who our entire family is ?? Well, this is an effort to bring all of us under one roof. 
+              Just tap on any of our relatives to know more info. 
+              If you or anyone is missing, please add it to the tree to complete our entire family connections
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-8 shadow-xl shadow-slate-200/40">
-            <div className="space-y-4">
-              <div className="rounded-3xl bg-indigo-600 px-5 py-5 text-white shadow-lg">
-                <p className="text-sm uppercase tracking-[0.3em] text-indigo-200">Logged in as</p>
-                <p className="mt-3 text-xl font-semibold">{session?.primary_name}</p>
-                <p className="mt-1 text-sm text-indigo-100">{session?.primary_email || 'No email added yet'}</p>
+          <div className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 sm:p-8 shadow-xl shadow-slate-200/40">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg">
+                <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Logged in as</p>
+                <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">{session?.primary_name}</p>
+                <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{session?.primary_email || 'No email added yet'}</p>
               </div>
-              <div className="rounded-3xl bg-white p-5 shadow-sm">
-                <p className="text-sm font-semibold text-slate-900">Family size</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">{treeRoots.reduce((count, node) => count + 1 + (node.children?.length ?? 0), 0)}</p>
-                <p className="mt-2 text-sm text-slate-500">Active members displayed in the tree.</p>
+              <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm">
+                <p className="text-xs sm:text-sm font-semibold text-slate-900">Family size</p>
+                <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{familyCount}</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40">
+        <section className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40">
           <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} />
         </section>
       </main>
+
+      {showChoiceModal && (
+        <ChoiceModal
+          isOpen={showChoiceModal}
+          currentUser={session || {}}
+          onClose={() => setShowChoiceModal(false)}
+          onSelectAddSelf={() => handleChoiceSelect('add-self')}
+          onSelectAddOther={() => handleChoiceSelect('add-new')}
+        />
+      )}
 
       {isAddModalOpen && (
         <AddModal
           parentId={addParentId}
           onClose={() => { setIsAddModalOpen(false); setAddParentId(null); }}
           onRefresh={handleRefresh}
+          mode={addMode}
+          currentUser={addMode === 'add-self' ? session : undefined}
         />
       )}
 
@@ -208,16 +231,6 @@ export default function Home() {
           mode={userModalMode}
           initialData={selectedUser}
           onEditRequested={() => setUserModalMode('edit')}
-        />
-      )}
-
-      {showSetupModal && session && (
-        <SetupModal
-          isOpen={showSetupModal}
-          currentUser={session}
-          onClose={() => setShowSetupModal(false)}
-          onSkip={() => setShowSetupModal(false)}
-          onRefresh={handleRefresh}
         />
       )}
     </div>
