@@ -85,10 +85,10 @@ function TreeBranch({ node, onShow, onAdd, onReorder }: TreeBranchProps) {
       {node.children && node.children.length > 0 ? (
         <>
           <div className="absolute top-full left-1/2 h-6 sm:h-8 w-px bg-slate-300" />
-          <div className="mt-6 sm:mt-8 flex min-w-full items-start justify-center gap-4 sm:gap-8 px-2 sm:px-4">
+          <div className="mt-6 sm:mt-8 flex items-start justify-center gap-4 sm:gap-8 px-2 sm:px-4 relative">
             <div className="absolute top-0 left-0 right-0 h-px bg-slate-300" />
             {node.children.map((child, idx) => (
-              <div key={child.id} className="relative flex flex-col items-center pt-6 sm:pt-8 group">
+              <div key={child.id} className="relative flex flex-col items-center pt-6 sm:pt-8 group flex-shrink-0">
                 {node.children && node.children.length > 1 && (
                   <div className={`absolute -top-6 sm:-top-7 left-1/2 transform -translate-x-1/2 z-10 bg-white rounded-full p-1 shadow-lg flex gap-1 ${showReorder ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'} transition`}>
                     <button
