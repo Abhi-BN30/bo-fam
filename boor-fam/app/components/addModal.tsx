@@ -16,6 +16,9 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     spouse_email: currentUser.spouse_email || '',
     contact: currentUser.contact || '',
     dob: currentUser.dob || '',
+    address: currentUser.address || '',
+    city: currentUser.city || '',
+    state: currentUser.state || '',
     parent_id: parentId
   } : {
     primary_name: '',
@@ -24,6 +27,9 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     spouse_email: '',
     contact: '',
     dob: '',
+    address: '',
+    city: '',
+    state: '',
     parent_id: parentId
   };
 
@@ -128,6 +134,24 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
             type="email"
             value={form.spouse_email}
             onChange={e => setForm({ ...form, spouse_email: e.target.value })}
+          />
+          <input
+            className="w-full border p-2 rounded text-sm"
+            placeholder="Address"
+            value={form.address}
+            onChange={e => setForm({ ...form, address: e.target.value })}
+          />
+          <input
+            className="w-full border p-2 rounded text-sm"
+            placeholder="City"
+            value={form.city}
+            onChange={e => setForm({ ...form, city: e.target.value })}
+          />
+          <input
+            className="w-full border p-2 rounded text-sm"
+            placeholder="State"
+            value={form.state}
+            onChange={e => setForm({ ...form, state: e.target.value })}
           />
 
           <div className="flex gap-2 mt-4">

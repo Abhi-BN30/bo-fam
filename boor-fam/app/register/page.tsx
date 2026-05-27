@@ -12,7 +12,10 @@ export default function RegisterPage() {
     spouse_name: '',
     spouse_email: '',
     contact: '',
-    dob: ''
+    dob: '',
+    address: '',
+    city: '',
+    state: ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,6 +124,27 @@ export default function RegisterPage() {
               placeholder="Spouse email (optional)"
               value={(form as any).spouse_email || ''}
               onChange={(e) => setForm({ ...form, spouse_email: e.target.value })}
+            />
+
+            <input
+              className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
+              placeholder="Address (optional)"
+              value={(form as any).address || ''}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+            />
+
+            <input
+              className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
+              placeholder="City (optional)"
+              value={(form as any).city || ''}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            />
+
+            <input
+              className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
+              placeholder="State (optional)"
+              value={(form as any).state || ''}
+              onChange={(e) => setForm({ ...form, state: e.target.value })}
             />
 
             {error && <p className="text-red-500 text-xs sm:text-sm">{error}</p>}

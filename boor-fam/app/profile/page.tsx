@@ -5,6 +5,7 @@ import FamilyTree, { TreeNode } from '../components/familyTree';
 import AddModal from '../components/addModal';
 import UserModal from '../components/userModal';
 import ChoiceModal from '../components/choiceModal';
+import { calculateGeneration, findAllRelationsAtGeneration, FlattenedNode } from '../lib/utils';
 
 export default function Home() {
   const [treeRoots, setTreeRoots] = useState<TreeNode[]>([]);
@@ -17,6 +18,9 @@ export default function Home() {
   const [session, setSession] = useState<Record<string, any> | null>(null);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const [showChoiceModal, setShowChoiceModal] = useState(false);
+  const [userGeneration, setUserGeneration] = useState<number | null>(null);
+  const [relatedUsers, setRelatedUsers] = useState<Array<{ user: FlattenedNode; relationship: string }>>([]);
+  const [userInTree, setUserInTree] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,6 +42,34 @@ export default function Home() {
       }
     });
     return count;
+  };
+
+  const flattenTree = (nodes: TreeNode[]): FlattenedNode[] => {
+    const flattened: FlattenedNode[] = [];
+    const traverse = (node: TreeNode) => {
+      flattened.push({
+        id: node.id,
+        parent_id: node.parent_id || undefined,
+        primary_name: node.primary_name,
+        spouse_name: node.spouse_name,
+      });
+      if (node.children) {
+        node.children.forEach(traverse);
+      }
+    };
+    nodes.forEach(traverse);
+    return flattened;
+  };
+
+  const isUserInTree = (userId: number, nodes: TreeNode[]): boolean => {
+    const traverse = (node: TreeNode): boolean => {
+      if (node.id === userId) return true;
+      if (node.children) {
+        return node.children.some(traverse);
+      }
+      return false;
+    };
+    return nodes.some(traverse);
   };
 
   const openAddModal = (parentId: number | null = null) => {
@@ -85,6 +117,15 @@ export default function Home() {
       }
     });
 
+    // Sort children by order
+    const sortChildren = (node: TreeNode) => {
+      if (node.children) {
+        node.children.sort((a, b) => (a.order || 0) - (b.order || 0));
+        node.children.forEach(sortChildren);
+      }
+    };
+    roots.forEach(sortChildren);
+
     return roots;
   };
 
@@ -94,6 +135,20 @@ export default function Home() {
       const data = await res.json();
       const tree = buildTree(data);
       setTreeRoots(tree);
+
+      if (session) {
+        const inTree = isUserInTree(session.id, tree);
+        setUserInTree(inTree);
+
+        if (inTree) {
+          const flattened = flattenTree(tree);
+          const gen = calculateGeneration(session.id, flattened);
+          setUserGeneration(gen);
+
+          const relations = findAllRelationsAtGeneration(session.id, flattened);
+          setRelatedUsers(relations);
+        }
+      }
     } catch (err) {
       console.error('Failed to load:', err);
     }
@@ -185,11 +240,36 @@ export default function Home() {
 
           <div className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 sm:p-8 shadow-xl shadow-slate-200/40">
             <div className="space-y-3 sm:space-y-4">
-              <div className="rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg">
-                <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Logged in as</p>
-                <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">{session?.primary_name}</p>
-                <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{session?.primary_email || 'No email added yet'}</p>
-              </div>
+              {userInTree ? (
+                <>
+                  <div className="rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg">
+                    <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Your Generation</p>
+                    <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">Level {userGeneration}</p>
+                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{userGeneration === 1 ? 'Family Root' : userGeneration === 2 ? 'Direct descendants' : `Generation ${userGeneration}`}</p>
+                  </div>
+                  {relatedUsers.length > 0 && (
+                    <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100">
+                      <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-3">Same Generation</p>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {relatedUsers.map((rel) => (
+                          <div key={rel.user.id} className="text-xs sm:text-sm p-2 bg-slate-50 rounded border border-slate-200">
+                            <div className="font-medium text-slate-700">{rel.user.primary_name}</div>
+                            <div className="text-slate-500 text-xs">{rel.relationship}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg">
+                    <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Welcome</p>
+                    <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">{session?.primary_name}</p>
+                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{session?.primary_email || 'No email added yet'}</p>
+                  </div>
+                </>
+              )}
               <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm">
                 <p className="text-xs sm:text-sm font-semibold text-slate-900">Family size</p>
                 <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{familyCount}</p>
@@ -208,8 +288,9 @@ export default function Home() {
           isOpen={showChoiceModal}
           currentUser={session || {}}
           onClose={() => setShowChoiceModal(false)}
-          onSelectAddSelf={() => handleChoiceSelect('add-self')}
+          onSelectAddSelf={() => { if (!userInTree) handleChoiceSelect('add-self'); }}
           onSelectAddOther={() => handleChoiceSelect('add-new')}
+          hideAddSelf={userInTree}
         />
       )}
 
