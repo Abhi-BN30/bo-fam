@@ -1,6 +1,5 @@
 
-
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export interface TreeNode {
   id: number;
@@ -22,6 +21,8 @@ interface FamilyTreeProps {
   onShow: (id: number) => void;
   onAdd: (parentId: number) => void;
   onReorder?: (parentId: number, updates: Array<{ user_id: number; order: number }>) => void;
+  isReorderMode?: boolean;
+  highlightPathIds?: number[];
 }
 
 interface TreeNodeProps {
@@ -32,9 +33,11 @@ interface TreeNodeProps {
   level?: number;
   childIndex?: number;
   totalSiblings?: number;
+  isReorderMode: boolean;
+  highlightPathIds: number[];
 }
 
-function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childIndex = 0, totalSiblings = 1 }: TreeNodeProps) {
+function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childIndex = 0, totalSiblings = 1, isReorderMode, highlightPathIds }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const hasChildren = node.children && node.children.length > 0;
@@ -63,46 +66,25 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
     onReorder?.(node.id, updates);
   };
 
-  // Increased indent: 3rem or 5rem depending on screen size
-  const indentClass = "ml-16 sm:ml-20";
-  const connectorOffset = "2.5rem"; // Vertical position of the horizontal arm
+  // Indent matches previous turn. 
+  // Connector math: 1/4 of card (64px) - Indent (350px) = -286px offset.
+  const indentClass = "ml-[300px] sm:ml-[350px]";
+  const isOnHighlightPath = highlightPathIds.includes(node.id);
 
   return (
     <div className="relative flex flex-col items-start">
       {/* Node Content */}
       <div className="flex items-start gap-2 sm:gap-4 mb-6 relative">
-        {/* Horizontal Connector to the vertical sibling line */}
+        {/* Horizontal Connector - ends exactly at the trunk line */}
         {level > 0 && (
           <div 
-            className="absolute border-t-2 border-slate-300" 
-            style={{ left: '-3rem', top: '2.5rem', width: '3rem' }}
+            className={`absolute border-t-2 left-[-244px] w-[244px] sm:left-[-286px] sm:w-[286px] ${isOnHighlightPath ? 'border-indigo-500 z-10' : 'border-slate-300'}`}
+            style={{ top: '2.5rem' }}
           />
         )}
 
-        {/* Reorder buttons */}
-        {level > 0 && (
-          <div className="flex flex-col gap-1 pt-4">
-            <button
-              onClick={() => handleMoveChild(node.id, 'up')}
-              disabled={childIndex === 0}
-              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
-              title="Move up"
-            >
-              ↑
-            </button>
-            <button
-              onClick={() => handleMoveChild(node.id, 'down')}
-              disabled={childIndex === totalSiblings - 1}
-              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
-              title="Move down"
-            >
-              ↓
-            </button>
-          </div>
-        )}
-
         {/* User Card - Improved UI */}
-        <div className="flex-shrink-0 bg-white border-l-4 border-indigo-500 rounded-xl p-4 sm:p-5 w-56 sm:w-64 shadow-md hover:shadow-xl transition-shadow">
+        <div className={`flex-shrink-0 bg-white border-l-4 rounded-xl p-4 sm:p-5 w-56 sm:w-64 shadow-md transition-all ${isOnHighlightPath ? 'border-indigo-600 shadow-indigo-100 ring-2 ring-indigo-500/20' : 'border-indigo-500 hover:shadow-xl'}`}>
           {/* Header with expand button */}
           <div className="flex items-start justify-between gap-2 mb-3">
             {hasChildren && (
@@ -132,12 +114,10 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
             )}
           </div>
 
-          {/* Location section - visible in lighter color */}
+          {/* Location section - visible below names */}
           {(node.country || node.state || node.city) && (
-            <div className="mb-3 text-xs text-slate-500 text-center space-y-0.5">
-              {node.country && <div>{node.country}</div>}
-              {node.state && <div>{node.state}</div>}
-              {node.city && <div>{node.city}</div>}
+            <div className="mb-3 text-[11px] text-slate-400 text-center leading-tight italic">
+              {[node.city, node.state, node.country].filter(Boolean).join(', ')}
             </div>
           )}
 
@@ -170,23 +150,50 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
             </button>
           </div>
         </div>
+
+        {/* Reorder buttons - Moved to the right */}
+        {level > 0 && isReorderMode && (
+          <div className="flex flex-col gap-1 pt-4">
+            <button
+              onClick={() => handleMoveChild(node.id, 'up')}
+              disabled={childIndex === 0}
+              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
+              title="Move up"
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => handleMoveChild(node.id, 'down')}
+              disabled={childIndex === totalSiblings - 1}
+              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
+              title="Move down"
+            >
+              ↓
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Children Container */}
       {isExpanded && hasChildren && (
-        <div className={`relative ${indentClass}`}>
-          {node.children!.map((child, idx) => (
-            <div key={child.id} className="relative">
-              {/* Vertical Connector Line - Stops at the last child */}
-              <div 
-                className="absolute bg-slate-300"
-                style={{ 
-                  left: '-3rem', 
-                  top: 0, 
-                  width: '2px', 
-                  height: idx === node.children!.length - 1 ? '2.5rem' : '100%' 
-                }} 
-              />
+        <div className={`relative ${indentClass} border-l border-transparent`}>
+          {node.children!.map((child, idx) => {
+            const isChildInPath = highlightPathIds.includes(child.id);
+            const isTargetBelowLaterSibling = node.children!.slice(idx + 1).some(sib => highlightPathIds.includes(sib.id));
+            const highlightVertical = isChildInPath || isTargetBelowLaterSibling;
+
+            return (
+              <div key={child.id} className="relative">
+                {/* Vertical Trunk Line - starts at parent's 1/4 mark */}
+                <div 
+                  className={`absolute left-[-244px] sm:left-[-286px] w-[2px] transition-colors ${highlightVertical ? 'bg-indigo-500 z-10' : 'bg-slate-300'}`}
+                  style={{ 
+                    top: idx === 0 ? '-1.5rem' : '0', 
+                    height: idx === node.children!.length - 1 
+                      ? (idx === 0 ? '4rem' : '2.5rem') 
+                      : '100%' 
+                  }} 
+                />
               <TreeNodeComponent
                 node={child}
                 onShow={onShow}
@@ -195,22 +202,41 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
                 level={level + 1}
                 childIndex={idx}
                 totalSiblings={node.children!.length}
+                isReorderMode={isReorderMode}
+                highlightPathIds={highlightPathIds}
               />
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-export default function FamilyTree({ nodes, onShow, onAdd, onReorder }: FamilyTreeProps) {
+export default function FamilyTree({ nodes, onShow, onAdd, onReorder, highlightPathIds = [] }: FamilyTreeProps) {
+  const [isReorderMode, setIsReorderMode] = useState(false);
+
   if (nodes.length === 0) {
     return <div className="py-8 sm:py-16 text-center text-slate-500 text-sm sm:text-base">No family tree data found yet.</div>;
   }
 
   return (
     <div className="w-full overflow-auto border border-slate-200 rounded-lg bg-slate-50 p-8">
+      {/* Reorder Toggle Button */}
+      <div className="flex justify-end mb-6">
+        <button
+          onClick={() => setIsReorderMode(!isReorderMode)}
+          className={`px-4 py-2 rounded-xl font-bold text-sm transition shadow-sm ${
+            isReorderMode 
+              ? 'bg-rose-500 hover:bg-rose-600 text-white' 
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+          }`}
+        >
+          {isReorderMode ? 'Finish Reordering' : 'Enable Reordering'}
+        </button>
+      </div>
+
       <div className="relative space-y-12">
         {nodes.map((root) => (
           <TreeNodeComponent
@@ -220,6 +246,8 @@ export default function FamilyTree({ nodes, onShow, onAdd, onReorder }: FamilyTr
             onAdd={onAdd}
             onReorder={onReorder}
             level={0}
+            isReorderMode={isReorderMode}
+            highlightPathIds={highlightPathIds}
           />
         ))}
       </div>

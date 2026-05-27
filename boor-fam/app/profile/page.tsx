@@ -21,6 +21,7 @@ export default function Home() {
   const [userGeneration, setUserGeneration] = useState<number | null>(null);
   const [relatedUsers, setRelatedUsers] = useState<Array<{ user: FlattenedNode; relationship: string }>>([]);
   const [userInTree, setUserInTree] = useState(false);
+  const [highlightPathIds, setHighlightPathIds] = useState<number[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -155,6 +156,16 @@ export default function Home() {
           );
           
           setRelatedUsers(sortedRelations);
+
+          // Calculate path from root to current user
+          const path: number[] = [];
+          let currentId: number | undefined | null = session.id;
+          while (currentId) {
+            path.push(currentId);
+            const found = flattened.find(n => n.id === currentId);
+            currentId = found?.parent_id;
+          }
+          setHighlightPathIds(path);
         }
       }
     } catch (err) {
@@ -253,13 +264,15 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
               {userInTree ? (
                 <>
-                  <div className="flex-1 rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg min-w-0 md:min-w-[200px]">
+                  <div className="flex-1 rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg min-w-0 flex flex-col">
                     <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Your Generation</p>
-                    <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">Level {userGeneration}</p>
-                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{userGeneration === 1 ? 'Family Root' : userGeneration === 2 ? 'Direct descendants' : `Generation ${userGeneration}`}</p>
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-2">
+                      <p className="text-lg sm:text-xl font-semibold">Level {userGeneration}</p>
+                      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{userGeneration === 1 ? 'Family Root' : userGeneration === 2 ? 'Direct descendants' : `Generation ${userGeneration}`}</p>
+                    </div>
                   </div>
                   {relatedUsers.length > 0 && (
-                    <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 min-w-0 md:min-w-[200px]">
+                    <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 min-w-0">
                       <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-3">Same Generation</p>
                       <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto">
                         {relatedUsers.map((rel) => (
@@ -274,15 +287,17 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <div className="flex-1 rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg min-w-0 md:min-w-[200px]">
+                  <div className="flex-1 rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg min-w-0 flex flex-col">
                     <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Welcome</p>
-                    <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">{session?.primary_name}</p>
-                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{session?.primary_email || 'No email added yet'}</p>
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-2">
+                      <p className="text-lg sm:text-xl font-semibold">{session?.primary_name}</p>
+                      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{session?.primary_email || 'No email added yet'}</p>
+                    </div>
                   </div>
                 </>
               )}
-              <div className="flex-1 md:flex-none rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col justify-center min-w-0 md:min-w-[140px]">
-                <p className="text-xs sm:text-sm font-semibold text-slate-900">Family size</p>
+              <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Family size</p>
                 <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{familyCount}</p>
               </div>
             </div>
@@ -291,7 +306,7 @@ export default function Home() {
 
         <section className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40">
           <div className="max-w-full overflow-x-auto">
-            <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} />
+            <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} highlightPathIds={highlightPathIds} />
           </div>
         </section>
       </main>
