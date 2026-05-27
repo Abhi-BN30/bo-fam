@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -13,6 +14,8 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   const [form, setForm] = useState<Record<string, any>>(initialData || {});
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [states, setStates] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
 
   const normalizeDob = (value: string | undefined) => {
     if (!value) return '';
@@ -22,7 +25,17 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   useEffect(() => {
     setForm({ ...(initialData || {}), dob: normalizeDob(initialData?.dob) });
     setError('');
+    if (initialData?.country) {
+      setStates(getStatesByCountry(initialData.country));
+      setCities(getCitiesByCountry(initialData.country));
+    }
   }, [initialData]);
+
+  const handleCountryChange = (country: string) => {
+    setForm({ ...form, country });
+    setStates(getStatesByCountry(country));
+    setCities(getCitiesByCountry(country));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -99,9 +112,28 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
           <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Primary email" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
           <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Spouse Name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
           <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Spouse email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
+          
+          {/* Location Section - Country, State, City */}
+          <select disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} value={form.country || ''} onChange={e => handleCountryChange(e.target.value)}>
+            <option value="">Select Country</option>
+            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          {form.country && states.length > 0 && (
+            <select disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} value={form.state || ''} onChange={e => setForm({ ...form, state: e.target.value })}>
+              <option value="">Select State/Province</option>
+              {states.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+
+          {form.country && cities.length > 0 && (
+            <select disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} value={form.city || ''} onChange={e => setForm({ ...form, city: e.target.value })}>
+              <option value="">Select City</option>
+              {cities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+
           <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Address" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} />
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="City" value={form.city || ''} onChange={e => setForm({ ...form, city: e.target.value })} />
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="State" value={form.state || ''} onChange={e => setForm({ ...form, state: e.target.value })} />
         </div>
 
         {error && <p className="text-red-500 text-xs sm:text-sm mt-3 sm:mt-4">{error}</p>}

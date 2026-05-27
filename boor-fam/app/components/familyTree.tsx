@@ -9,6 +9,9 @@ export interface TreeNode {
   contact?: string;
   primary_email?: string;
   spouse_email?: string;
+  country?: string;
+  state?: string;
+  city?: string;
   parent_id?: number | null;
   order?: number;
   children: TreeNode[];
@@ -19,64 +22,38 @@ interface FamilyTreeProps {
   onShow: (id: number) => void;
   onAdd: (parentId: number) => void;
   onReorder?: (parentId: number, updates: Array<{ user_id: number; order: number }>) => void;
-  isRoot?: boolean;
 }
 
-interface TreeBranchProps {
+interface TreeNodeProps {
   node: TreeNode;
   onShow: (id: number) => void;
   onAdd: (parentId: number) => void;
   onReorder?: (parentId: number, updates: Array<{ user_id: number; order: number }>) => void;
-  isRootChild?: boolean;
+  level?: number;
+  childIndex?: number;
+  totalSiblings?: number;
 }
 
-function UserCard({ node, onShow, onAdd }: { node: TreeNode; onShow: (id: number) => void; onAdd: (parentId: number) => void }) {
-  return (
-    <div className="relative bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-5 w-56 sm:w-72 text-center transition hover:-translate-y-1 hover:shadow-2xl">
-      <div className="mx-auto mb-2 sm:mb-3 flex h-12 sm:h-16 w-12 sm:w-16 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-semibold text-base sm:text-lg">{node.primary_name?.charAt(0) || '?'}</div>
+const SIBLING_SPACING = 90; // Vertical spacing between siblings (reduced)
+const CONNECTOR_WIDTH = 120; // Width of horizontal connector
 
-      <div className="text-base sm:text-lg font-semibold text-slate-900">{node.primary_name}</div>
-      {node.spouse_name ? <div className="text-xs sm:text-sm text-slate-500">&amp; {node.spouse_name}</div> : null}
+function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childIndex = 0, totalSiblings = 1 }: TreeNodeProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
 
-      <div className="mt-2 sm:mt-3 text-left text-xs sm:text-sm text-slate-600 space-y-0.5 sm:space-y-1">
-        {node.contact ? <div><span className="font-semibold text-slate-700">Phone:</span> <span className="text-xs">{node.contact}</span></div> : null}
-        {node.primary_email ? <div><span className="font-semibold text-slate-700">Email:</span> <span className="text-xs">{node.primary_email}</span></div> : null}
-      </div>
+  const hasChildren = node.children && node.children.length > 0;
 
-      <div className="mt-3 sm:mt-5 flex gap-1 sm:gap-2 flex-wrap justify-center">
-        <button
-          type="button"
-          onClick={() => onShow(node.id)}
-          className="rounded-full bg-indigo-600 px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-indigo-700"
-        >
-          View
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAdd(node.id);
-          }}
-          className="rounded-full bg-emerald-500 px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-emerald-600"
-        >
-          Add
-        </button>
-      </div>
-    </div>
-  );
-}
+  const handleMoveChild = (childId: number, direction: 'up' | 'down') => {
+    if (!hasChildren || !node.children) return;
 
-function ChildrenLayout({ node, onShow, onAdd, onReorder, isRootChild }: TreeBranchProps) {
-  const [showReorder, setShowReorder] = useState(false);
+    const children = [...node.children];
+    const currentIndex = children.findIndex(c => c.id === childId);
+    
+    if (currentIndex === -1) return;
 
-  if (!node.children || node.children.length === 0) return null;
-
-  const handleMoveChild = (index: number, direction: 'up' | 'down') => {
-    const children = [...(node.children || [])];
-    if (direction === 'up' && index > 0) {
-      [children[index], children[index - 1]] = [children[index - 1], children[index]];
-    } else if (direction === 'down' && index < children.length - 1) {
-      [children[index], children[index + 1]] = [children[index + 1], children[index]];
+    if (direction === 'up' && currentIndex > 0) {
+      [children[currentIndex], children[currentIndex - 1]] = [children[currentIndex - 1], children[currentIndex]];
+    } else if (direction === 'down' && currentIndex < children.length - 1) {
+      [children[currentIndex], children[currentIndex + 1]] = [children[currentIndex + 1], children[currentIndex]];
     } else {
       return;
     }
@@ -89,64 +66,155 @@ function ChildrenLayout({ node, onShow, onAdd, onReorder, isRootChild }: TreeBra
     onReorder?.(node.id, updates);
   };
 
-  return (
-    <>
-      <div className="absolute top-full left-1/2 h-6 sm:h-8 w-px bg-slate-300" />
-      <div className="mt-6 sm:mt-8 flex flex-col items-center gap-4 sm:gap-6 pl-8 sm:pl-12">
-        {node.children.map((child, idx) => (
-          <div key={child.id} className="relative flex flex-col items-start w-full">
-            <div className="relative flex items-center gap-3 sm:gap-4 group">
-              <div className="absolute -left-5 sm:-left-6 top-1/2 h-px w-4 sm:w-6 bg-slate-300 -translate-y-1/2" />
-              
-              {isRootChild && node.children && node.children.length > 1 && (
-                <div className={`flex gap-1 ${showReorder ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100'} transition`}>
-                  <button
-                    onClick={() => handleMoveChild(idx, 'up')}
-                    disabled={idx === 0}
-                    className="bg-blue-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600"
-                    title="Move up"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => handleMoveChild(idx, 'down')}
-                    disabled={idx === node.children!.length - 1}
-                    className="bg-blue-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600"
-                    title="Move down"
-                  >
-                    ↓
-                  </button>
-                </div>
-              )}
+  const leftIndent = level === 0 ? 0 : level * 300; // Horizontal indent stays same per level
+  const cardHeight = 200; // Approximate card height
 
-              <TreeBranch node={child} onShow={onShow} onAdd={onAdd} onReorder={onReorder} isRootChild={false} />
+  return (
+    <div className="relative" style={{ paddingBottom: `${SIBLING_SPACING}px` }}>
+      {/* Connector lines */}
+      {level > 0 && (
+        <>
+          {/* Vertical line connecting all siblings */}
+          {totalSiblings > 1 && (
+            <div
+              className="absolute bg-slate-400"
+              style={{
+                left: `${-CONNECTOR_WIDTH}px`,
+                top: '40px',
+                width: '2px',
+                height: `${(totalSiblings - 1) * SIBLING_SPACING + 20}px`,
+                zIndex: 1,
+              }}
+            />
+          )}
+          
+          {/* Horizontal line from vertical bar to node */}
+          <div
+            className="absolute bg-slate-400"
+            style={{
+              left: `${-CONNECTOR_WIDTH}px`,
+              top: '40px',
+              width: `${CONNECTOR_WIDTH}px`,
+              height: '2px',
+              zIndex: 1,
+            }}
+          />
+        </>
+      )}
+
+      {/* Node container with reorder buttons */}
+      <div className="relative flex items-start gap-2" style={{ marginLeft: `${leftIndent}px` }}>
+        {/* Reorder buttons - positioned to the left of card */}
+        {level > 0 && (
+          <div className="flex flex-col gap-1 flex-shrink-0 pt-4">
+            <button
+              onClick={() => handleMoveChild(node.id, 'up')}
+              disabled={childIndex === 0}
+              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
+              title="Move up"
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => handleMoveChild(node.id, 'down')}
+              disabled={childIndex === totalSiblings - 1}
+              className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
+              title="Move down"
+            >
+              ↓
+            </button>
+          </div>
+        )}
+
+        {/* User Card - Improved UI */}
+        <div className="flex-shrink-0 bg-white border-l-4 border-indigo-500 rounded-xl p-4 sm:p-5 w-56 sm:w-64 shadow-md hover:shadow-xl transition-shadow">
+          {/* Header with expand button */}
+          <div className="flex items-start justify-between gap-2 mb-3">
+            {hasChildren && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="px-2 py-0.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 rounded transition border border-slate-300 flex-shrink-0"
+                title={isExpanded ? 'Collapse' : 'Expand'}
+              >
+                {isExpanded ? '−' : '+'}
+              </button>
+            )}
+            {!hasChildren && <div className="w-12" />}
+            
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex-shrink-0">
+              {hasChildren ? `${node.children!.length} child${node.children!.length !== 1 ? 'ren' : ''}` : ''}
             </div>
           </div>
-        ))}
+
+          {/* Name section - center aligned, same size/color */}
+          <div className="mb-3 text-center">
+            <div className="text-sm font-semibold text-slate-900">{node.primary_name}</div>
+            {node.spouse_name && (
+              <>
+                <div className="h-px bg-slate-200 my-2" />
+                <div className="text-sm font-semibold text-slate-900">{node.spouse_name}</div>
+              </>
+            )}
+          </div>
+
+          {/* Location section - visible in lighter color */}
+          {(node.country || node.state || node.city) && (
+            <div className="mb-3 text-xs text-slate-500 text-center space-y-0.5">
+              {node.country && <div>{node.country}</div>}
+              {node.state && <div>{node.state}</div>}
+              {node.city && <div>{node.city}</div>}
+            </div>
+          )}
+
+          {/* Contact info - minimal */}
+          {(node.contact || node.primary_email) && (
+            <div className="mb-3 text-xs text-slate-600 space-y-0.5 pb-3 border-b border-slate-100">
+              {node.contact && <div className="truncate"><span className="font-semibold">Ph:</span> {node.contact}</div>}
+              {node.primary_email && <div className="truncate"><span className="font-semibold">Email:</span> {node.primary_email}</div>}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onShow(node.id)}
+              className="flex-1 rounded-md bg-indigo-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition"
+            >
+              View
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAdd(node.id);
+              }}
+              className="flex-1 rounded-md bg-emerald-500 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition"
+            >
+              Add
+            </button>
+          </div>
+        </div>
       </div>
-    </>
-  );
-}
 
-function TreeBranch({ node, onShow, onAdd, onReorder, isRootChild = false }: TreeBranchProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  return (
-    <div className="relative flex flex-col items-start">
-      <div className="flex items-center gap-2">
-        {isRootChild && node.children && node.children.length > 0 && (
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="px-2 py-1 text-sm bg-slate-200 hover:bg-slate-300 rounded transition"
-            title={isExpanded ? "Collapse" : "Expand"}
-          >
-            {isExpanded ? '−' : '+'}
-          </button>
-        )}
-        <UserCard node={node} onShow={onShow} onAdd={onAdd} />
-      </div>
-
-      {isExpanded && <ChildrenLayout node={node} onShow={onShow} onAdd={onAdd} onReorder={onReorder} isRootChild={isRootChild} />}
+      {/* Children - all at same horizontal level */}
+      {isExpanded && hasChildren && (
+        <div className="relative">
+          {node.children!.map((child, idx) => (
+            <div key={child.id} style={{ marginTop: idx === 0 ? '0' : `${SIBLING_SPACING - 60}px` }}>
+              <TreeNodeComponent
+                node={child}
+                onShow={onShow}
+                onAdd={onAdd}
+                onReorder={onReorder}
+                level={level + 1}
+                childIndex={idx}
+                totalSiblings={node.children!.length}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -157,37 +225,17 @@ export default function FamilyTree({ nodes, onShow, onAdd, onReorder }: FamilyTr
   }
 
   return (
-    <div className="w-full h-96 sm:h-[600px] overflow-auto border border-slate-200 rounded-lg bg-slate-50 relative">
-      <div className="flex flex-wrap gap-6 sm:gap-10 py-6 sm:py-10 px-4 sm:px-6">
+    <div className="w-full overflow-auto border border-slate-200 rounded-lg bg-slate-50 p-8">
+      <div className="relative space-y-12">
         {nodes.map((root) => (
-          <div key={root.id} className="flex flex-col items-start">
-            <div className="flex items-center gap-2 mb-6">
-              {root.children && root.children.length > 0 && (
-                <div className="px-2 py-1 text-xs font-semibold bg-slate-200 rounded">
-                  {root.children.length} child{root.children.length !== 1 ? 'ren' : ''}
-                </div>
-              )}
-            </div>
-            
-            <div className="flex flex-col items-start gap-6">
-              <UserCard node={root} onShow={onShow} onAdd={onAdd} />
-              
-              {root.children && root.children.length > 0 && (
-                <div className="flex gap-4 sm:gap-8 flex-wrap items-start">
-                  {root.children.map((child) => (
-                    <TreeBranch
-                      key={child.id}
-                      node={child}
-                      onShow={onShow}
-                      onAdd={onAdd}
-                      onReorder={onReorder}
-                      isRootChild={true}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <TreeNodeComponent
+            key={root.id}
+            node={root}
+            onShow={onShow}
+            onAdd={onAdd}
+            onReorder={onReorder}
+            level={0}
+          />
         ))}
       </div>
     </div>

@@ -146,7 +146,15 @@ export default function Home() {
           setUserGeneration(gen);
 
           const relations = findAllRelationsAtGeneration(session.id, flattened);
-          setRelatedUsers(relations);
+          
+          // Sort relationships: Siblings first, then First Cousins, then Distant Cousins
+          const relationshipOrder = { 'Sibling': 0, 'First Cousin': 1, 'Distant Cousin': 2 };
+          const sortedRelations = relations.sort((a, b) => 
+            (relationshipOrder[a.relationship as keyof typeof relationshipOrder] ?? 3) - 
+            (relationshipOrder[b.relationship as keyof typeof relationshipOrder] ?? 3)
+          );
+          
+          setRelatedUsers(sortedRelations);
         }
       }
     } catch (err) {
@@ -228,7 +236,9 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-7xl px-3 sm:px-6 pb-12 sm:pb-20 pt-28 sm:pt-36">
-        <section className="mb-6 sm:mb-10 grid gap-4 sm:gap-6 lg:grid-cols-[1.9fr_1fr]">
+        {/* Description and Generation - Horizontal Layout */}
+        <section className="mb-6 sm:mb-10 space-y-4 sm:space-y-6">
+          {/* Description Card */}
           <div className="rounded-lg sm:rounded-[2rem] bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/50">
             <h1 className="mt-1 text-2xl sm:text-3xl font-medium uppercase tracking-[0.35em] text-indigo-600">The Home</h1>
             <p className="mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base leading-7 text-slate-600">
@@ -238,6 +248,7 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Generation and Related Users */}
           <div className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 sm:p-8 shadow-xl shadow-slate-200/40">
             <div className="space-y-3 sm:space-y-4">
               {userInTree ? (
@@ -279,7 +290,9 @@ export default function Home() {
         </section>
 
         <section className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40">
-          <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} />
+          <div className="max-w-full overflow-x-auto">
+            <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} />
+          </div>
         </section>
       </main>
 

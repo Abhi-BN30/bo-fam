@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AddModal from '../components/addModal';
 import ChoiceModal from '../components/choiceModal';
+import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,8 +15,9 @@ export default function RegisterPage() {
     contact: '',
     dob: '',
     address: '',
-    city: '',
-    state: ''
+    country: '',
+    state: '',
+    city: ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,6 +25,8 @@ export default function RegisterPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addMode, setAddMode] = useState<'add-new' | 'add-self'>('add-new');
   const [currentUser, setCurrentUser] = useState<Record<string, any> | null>(null);
+  const [states, setStates] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
 
   useEffect(() => {
     const session = localStorage.getItem('user_session');
@@ -30,6 +34,20 @@ export default function RegisterPage() {
       router.replace('/profile');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (form.country) {
+      setStates(getStatesByCountry(form.country));
+      setCities(getCitiesByCountry(form.country));
+    } else {
+      setStates([]);
+      setCities([]);
+    }
+  }, [form.country]);
+
+  const handleCountryChange = (country: string) => {
+    setForm({ ...form, country, state: '', city: '' });
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -129,23 +147,40 @@ export default function RegisterPage() {
             <input
               className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
               placeholder="Address (optional)"
-              value={(form as any).address || ''}
+              value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
             />
 
-            <input
-              className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
-              placeholder="City (optional)"
-              value={(form as any).city || ''}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-            />
+            <select
+              className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black focus:border-indigo-500 outline-none"
+              value={form.country}
+              onChange={(e) => handleCountryChange(e.target.value)}
+            >
+              <option value="">Select Country (optional)</option>
+              {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
 
-            <input
-              className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-indigo-500 outline-none"
-              placeholder="State (optional)"
-              value={(form as any).state || ''}
-              onChange={(e) => setForm({ ...form, state: e.target.value })}
-            />
+            {form.country && states.length > 0 && (
+              <select
+                className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black focus:border-indigo-500 outline-none"
+                value={form.state}
+                onChange={(e) => setForm({ ...form, state: e.target.value })}
+              >
+                <option value="">Select State/Province</option>
+                {states.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
+
+            {form.country && cities.length > 0 && (
+              <select
+                className="w-full border-2 border-gray-200 p-2.5 sm:p-3 rounded-xl text-sm sm:text-base text-black focus:border-indigo-500 outline-none"
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              >
+                <option value="">Select City</option>
+                {cities.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
 
             {error && <p className="text-red-500 text-xs sm:text-sm">{error}</p>}
 

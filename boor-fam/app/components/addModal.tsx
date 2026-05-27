@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
 
 interface AddModalProps {
   onClose: () => void;
@@ -17,8 +18,9 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     contact: currentUser.contact || '',
     dob: currentUser.dob || '',
     address: currentUser.address || '',
-    city: currentUser.city || '',
+    country: currentUser.country || '',
     state: currentUser.state || '',
+    city: currentUser.city || '',
     parent_id: parentId
   } : {
     primary_name: '',
@@ -28,14 +30,31 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     contact: '',
     dob: '',
     address: '',
-    city: '',
+    country: '',
     state: '',
+    city: '',
     parent_id: parentId
   };
 
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [states, setStates] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (form.country) {
+      setStates(getStatesByCountry(form.country));
+      setCities(getCitiesByCountry(form.country));
+    } else {
+      setStates([]);
+      setCities([]);
+    }
+  }, [form.country]);
+
+  const handleCountryChange = (country: string) => {
+    setForm({ ...form, country, state: '', city: '' });
+  };
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -141,18 +160,38 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
             value={form.address}
             onChange={e => setForm({ ...form, address: e.target.value })}
           />
-          <input
+          
+          {/* Location Section - Country, State, City */}
+          <select
             className="w-full border p-2 rounded text-sm"
-            placeholder="City"
-            value={form.city}
-            onChange={e => setForm({ ...form, city: e.target.value })}
-          />
-          <input
-            className="w-full border p-2 rounded text-sm"
-            placeholder="State"
-            value={form.state}
-            onChange={e => setForm({ ...form, state: e.target.value })}
-          />
+            value={form.country}
+            onChange={e => handleCountryChange(e.target.value)}
+          >
+            <option value="">Select Country</option>
+            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          {form.country && states.length > 0 && (
+            <select
+              className="w-full border p-2 rounded text-sm"
+              value={form.state}
+              onChange={e => setForm({ ...form, state: e.target.value })}
+            >
+              <option value="">Select State/Province</option>
+              {states.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
+
+          {form.country && cities.length > 0 && (
+            <select
+              className="w-full border p-2 rounded text-sm"
+              value={form.city}
+              onChange={e => setForm({ ...form, city: e.target.value })}
+            >
+              <option value="">Select City</option>
+              {cities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
 
           <div className="flex gap-2 mt-4">
             <button type="button" onClick={onClose} className="bg-gray-200 px-3 sm:px-4 py-2 rounded text-sm font-medium hover:bg-gray-300">
