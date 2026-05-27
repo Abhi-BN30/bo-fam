@@ -250,22 +250,22 @@ export default function Home() {
 
           {/* Generation and Related Users */}
           <div className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 sm:p-8 shadow-xl shadow-slate-200/40">
-            <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
               {userInTree ? (
                 <>
-                  <div className="rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg">
+                  <div className="flex-1 rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg min-w-0 md:min-w-[200px]">
                     <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Your Generation</p>
                     <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">Level {userGeneration}</p>
                     <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{userGeneration === 1 ? 'Family Root' : userGeneration === 2 ? 'Direct descendants' : `Generation ${userGeneration}`}</p>
                   </div>
                   {relatedUsers.length > 0 && (
-                    <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100">
+                    <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 min-w-0 md:min-w-[200px]">
                       <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-3">Same Generation</p>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                      <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto">
                         {relatedUsers.map((rel) => (
                           <div key={rel.user.id} className="text-xs sm:text-sm p-2 bg-slate-50 rounded border border-slate-200">
-                            <div className="font-medium text-slate-700">{rel.user.primary_name}</div>
-                            <div className="text-slate-500 text-xs">{rel.relationship}</div>
+                            <span className="font-medium text-slate-700">{rel.user.primary_name}</span>
+                            <span className="text-slate-400 text-[10px] ml-2 italic">({rel.relationship})</span>
                           </div>
                         ))}
                       </div>
@@ -274,14 +274,14 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <div className="rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg">
+                  <div className="flex-1 rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg min-w-0 md:min-w-[200px]">
                     <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Welcome</p>
                     <p className="mt-2 sm:mt-3 text-lg sm:text-xl font-semibold">{session?.primary_name}</p>
                     <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{session?.primary_email || 'No email added yet'}</p>
                   </div>
                 </>
               )}
-              <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm">
+              <div className="flex-1 md:flex-none rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col justify-center min-w-0 md:min-w-[140px]">
                 <p className="text-xs sm:text-sm font-semibold text-slate-900">Family size</p>
                 <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{familyCount}</p>
               </div>

@@ -76,11 +76,11 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
 
   const handleDelete = async () => {
     if (!form?.id) return;
-    if (!confirm('Delete this user? This action cannot be undone.')) return;
+    if (!confirm('Remove this person from the family tree? They will stay in the database and can be added back later if needed.')) return;
 
     try {
-      const res = await fetch('/api/users', {
-        method: 'DELETE',
+      const res = await fetch('/api/tree/remove-from-tree', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: form.id }),
       });

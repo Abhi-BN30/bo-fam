@@ -34,9 +34,6 @@ interface TreeNodeProps {
   totalSiblings?: number;
 }
 
-const SIBLING_SPACING = 90; // Vertical spacing between siblings (reduced)
-const CONNECTOR_WIDTH = 120; // Width of horizontal connector
-
 function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childIndex = 0, totalSiblings = 1 }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -66,47 +63,25 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
     onReorder?.(node.id, updates);
   };
 
-  const leftIndent = level === 0 ? 0 : level * 300; // Horizontal indent stays same per level
-  const cardHeight = 200; // Approximate card height
+  // Increased indent: 3rem or 5rem depending on screen size
+  const indentClass = "ml-16 sm:ml-20";
+  const connectorOffset = "2.5rem"; // Vertical position of the horizontal arm
 
   return (
-    <div className="relative" style={{ paddingBottom: `${SIBLING_SPACING}px` }}>
-      {/* Connector lines */}
-      {level > 0 && (
-        <>
-          {/* Vertical line connecting all siblings */}
-          {totalSiblings > 1 && (
-            <div
-              className="absolute bg-slate-400"
-              style={{
-                left: `${-CONNECTOR_WIDTH}px`,
-                top: '40px',
-                width: '2px',
-                height: `${(totalSiblings - 1) * SIBLING_SPACING + 20}px`,
-                zIndex: 1,
-              }}
-            />
-          )}
-          
-          {/* Horizontal line from vertical bar to node */}
-          <div
-            className="absolute bg-slate-400"
-            style={{
-              left: `${-CONNECTOR_WIDTH}px`,
-              top: '40px',
-              width: `${CONNECTOR_WIDTH}px`,
-              height: '2px',
-              zIndex: 1,
-            }}
-          />
-        </>
-      )}
-
-      {/* Node container with reorder buttons */}
-      <div className="relative flex items-start gap-2" style={{ marginLeft: `${leftIndent}px` }}>
-        {/* Reorder buttons - positioned to the left of card */}
+    <div className="relative flex flex-col items-start">
+      {/* Node Content */}
+      <div className="flex items-start gap-2 sm:gap-4 mb-6 relative">
+        {/* Horizontal Connector to the vertical sibling line */}
         {level > 0 && (
-          <div className="flex flex-col gap-1 flex-shrink-0 pt-4">
+          <div 
+            className="absolute border-t-2 border-slate-300" 
+            style={{ left: '-3rem', top: '2.5rem', width: '3rem' }}
+          />
+        )}
+
+        {/* Reorder buttons */}
+        {level > 0 && (
+          <div className="flex flex-col gap-1 pt-4">
             <button
               onClick={() => handleMoveChild(node.id, 'up')}
               disabled={childIndex === 0}
@@ -197,11 +172,21 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
         </div>
       </div>
 
-      {/* Children - all at same horizontal level */}
+      {/* Children Container */}
       {isExpanded && hasChildren && (
-        <div className="relative">
+        <div className={`relative ${indentClass}`}>
           {node.children!.map((child, idx) => (
-            <div key={child.id} style={{ marginTop: idx === 0 ? '0' : `${SIBLING_SPACING - 60}px` }}>
+            <div key={child.id} className="relative">
+              {/* Vertical Connector Line - Stops at the last child */}
+              <div 
+                className="absolute bg-slate-300"
+                style={{ 
+                  left: '-3rem', 
+                  top: 0, 
+                  width: '2px', 
+                  height: idx === node.children!.length - 1 ? '2.5rem' : '100%' 
+                }} 
+              />
               <TreeNodeComponent
                 node={child}
                 onShow={onShow}
