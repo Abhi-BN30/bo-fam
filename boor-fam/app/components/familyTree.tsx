@@ -128,10 +128,10 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
           </div>
 
           {/* Location section - enhanced visibility below names */}
-          {(node.city || node.state || node.country) && (
+          {(node.city?.trim() || node.state?.trim() || node.country?.trim()) && (
             <div className="mb-3 text-center px-2">
               <p className="text-[10px] sm:text-[11px] text-slate-600 font-medium leading-tight italic break-words">
-                {[node.city, node.state, node.country].filter(val => val && val.toString().trim() !== "").join(", ")}
+                {[node.city, node.state, node.country].filter(val => typeof val === 'string' && val.trim() !== "").join(", ")}
               </p>
             </div>
           )}

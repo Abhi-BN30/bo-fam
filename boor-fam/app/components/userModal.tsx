@@ -56,6 +56,12 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
         return;
       }
 
+      if (form.pin && form.pin.toString().length !== 4) {
+        setError('PIN must be exactly 4 digits.');
+        setIsSaving(false);
+        return;
+      }
+
       // Use custom city value if enabled
       const finalForm = { ...form };
       if (showCustomCityInput) {
@@ -71,7 +77,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
       const res = await fetch('/api/users', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalForm),
+        body: JSON.stringify({ ...finalForm, pin: parseInt(finalForm.pin, 10) }),
       });
       
       if (!res.ok) {
@@ -84,7 +90,9 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
         const stored = localStorage.getItem('user_session');
         const currentSession = stored ? JSON.parse(stored) : null;
         if (currentSession?.id === finalForm.id) {
-          localStorage.setItem('user_session', JSON.stringify({ ...currentSession, ...finalForm }));
+          // Exclude PIN when updating session storage
+          const { pin: _, ...sessionUpdate } = finalForm;
+          localStorage.setItem('user_session', JSON.stringify({ ...currentSession, ...sessionUpdate }));
         }
       }
 
@@ -167,9 +175,15 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
               <input className={inputStyle} readOnly={mode === 'view'} placeholder="email@example.com" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} required />
             </div>
 
+            <div className="space-y-1">
+              <label className={labelStyle}>Security PIN *</label>
+              <input className={inputStyle} type="password" inputMode="numeric" maxLength={4} readOnly={mode === 'view'} placeholder="4-digit PIN" value={form.pin || ''} onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} required />
+            </div>
+
             <div className="p-4 bg-slate-50 rounded-2xl space-y-3 border border-slate-100">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Spouse Details (Optional)</p>
               <input className={`${inputStyle.replace('bg-slate-50/50', 'bg-white')} p-2.5`} readOnly={mode === 'view'} placeholder="Spouse Name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
+              <input className={`${inputStyle.replace('bg-slate-50/50', 'bg-white')} p-2.5`} readOnly={mode === 'view'} placeholder="Spouse Contact Number" value={form.spouse_contact || ''} onChange={e => setForm({ ...form, spouse_contact: e.target.value })} />
               <input className={`${inputStyle.replace('bg-slate-50/50', 'bg-white')} p-2.5`} readOnly={mode === 'view'} placeholder="Spouse Email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
             </div>
           </div>

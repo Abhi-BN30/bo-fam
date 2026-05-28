@@ -16,23 +16,27 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     primary_email: currentUser.primary_email || '',
     spouse_email: currentUser.spouse_email || '',
     contact: currentUser.contact || '',
+    spouse_contact: currentUser.spouse_contact || '',
     dob: currentUser.dob || '',
     address: currentUser.address || '',
     country: currentUser.country || '',
     state: currentUser.state || '',
     city: currentUser.city || '',
+    pin: currentUser.pin ? currentUser.pin.toString() : '',
     parent_id: parentId
   } : {
     primary_name: '',
     spouse_name: '',
     primary_email: '',
     spouse_email: '',
+    spouse_contact: '',
     contact: '',
     dob: '',
     address: '',
     country: '',
     state: '',
     city: '',
+    pin: '',
     parent_id: parentId
   };
 
@@ -67,6 +71,11 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     // Validate primary email
     if (!form.primary_email) {
       setError('Primary email is mandatory.');
+      return;
+    }
+
+    if (form.pin.length !== 4) {
+      setError('PIN must be exactly 4 digits.');
       return;
     }
 
@@ -105,7 +114,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
         const res = await fetch('/api/users', { // Use finalForm for submission
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(finalForm),
+          body: JSON.stringify({ ...finalForm, pin: parseInt(finalForm.pin, 10) }),
         });
 
         if (!res.ok) {
@@ -159,10 +168,15 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
               <label className="text-xs font-bold text-slate-500 ml-1">Primary Email *</label>
               <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" placeholder="email@example.com" type="email" required readOnly={mode === 'add-self'} value={form.primary_email} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
             </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 ml-1">Security PIN *</label>
+              <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" type="password" inputMode="numeric" maxLength={4} placeholder="4-digit PIN" required readOnly={mode === 'add-self'} value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} />
+            </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl space-y-3 border border-slate-100">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Spouse Details (Optional)</p>
               <input className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white" placeholder="Spouse Name" value={form.spouse_name} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
+              <input className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white" placeholder="Spouse Contact Number" value={form.spouse_contact} onChange={e => setForm({ ...form, spouse_contact: e.target.value })} />
               <input className="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white" placeholder="Spouse Email" type="email" value={form.spouse_email} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
             </div>
           </div>

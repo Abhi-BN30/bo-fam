@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AddModal from '../components/addModal';
-import ChoiceModal from '../components/choiceModal';
 import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
 
 export default function RegisterPage() {
@@ -12,25 +10,23 @@ export default function RegisterPage() {
     primary_email: '',
     spouse_name: '',
     spouse_email: '',
+    spouse_contact: '',
     contact: '',
     dob: '',
     address: '',
     country: '',
     state: '',
-    city: ''
+    city: '',
+    pin: ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showChoiceModal, setShowChoiceModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addMode, setAddMode] = useState<'add-new' | 'add-self'>('add-new');
-  const [currentUser, setCurrentUser] = useState<Record<string, any> | null>(null);
   const [states, setStates] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
 
   useEffect(() => {
-    const session = localStorage.getItem('user_session');
-    if (session) {
+    const email = localStorage.getItem('user_email');
+    if (email) {
       router.replace('/profile');
     }
   }, [router]);
@@ -57,6 +53,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (form.pin.length !== 4) {
+      setError('PIN must be exactly 4 digits.');
+      return;
+    }
+
     setError('');
     setIsSubmitting(true);
 
@@ -64,7 +65,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, pin: parseInt(form.pin, 10) }),
       });
 
       if (!res.ok) {
@@ -72,8 +73,7 @@ export default function RegisterPage() {
       }
 
       const data = await res.json();
-      const userSession = { id: data.id, ...form };
-      localStorage.setItem('user_session', JSON.stringify(userSession));
+      localStorage.setItem('user_email', form.primary_email);
       // Directly redirect to profile after successful registration
       router.push('/profile');
     } catch (err) {
@@ -82,17 +82,6 @@ export default function RegisterPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleChoiceSelect = (mode: 'add-self' | 'add-new') => {
-    setAddMode(mode);
-    setShowChoiceModal(false);
-    setShowAddModal(true);
-  };
-
-  const handleAddClose = () => {
-    setShowAddModal(false);
-    router.push('/profile');
   };
 
   const inputStyle = "w-full border border-slate-200 bg-slate-50/50 p-3.5 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all";
@@ -130,12 +119,17 @@ export default function RegisterPage() {
                   <input type="email" className={inputStyle} placeholder="Email address" value={form.primary_email} onChange={(e) => setForm({ ...form, primary_email: e.target.value })} required />
                 </div>
               </div>
+              <div className="space-y-1">
+                <label className={labelStyle}>Security PIN *</label>
+                <input type="password" inputMode="numeric" maxLength={4} className={inputStyle} placeholder="Create a 4-digit login PIN" value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} required />
+              </div>
             </div>
 
             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Spouse Information</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <input className={`${inputStyle} bg-white`} placeholder="Spouse Name" value={form.spouse_name} onChange={(e) => setForm({ ...form, spouse_name: e.target.value })} />
+                <input className={`${inputStyle} bg-white`} placeholder="Spouse Contact" value={form.spouse_contact} onChange={(e) => setForm({ ...form, spouse_contact: e.target.value })} />
                 <input type="email" className={`${inputStyle} bg-white`} placeholder="Spouse Email" value={(form as any).spouse_email || ''} onChange={(e) => setForm({ ...form, spouse_email: e.target.value })} />
               </div>
             </div>
@@ -193,29 +187,6 @@ export default function RegisterPage() {
           </form>
         </div>
       </div>
-
-      {showChoiceModal && currentUser && (
-        <ChoiceModal
-          isOpen={showChoiceModal}
-          currentUser={currentUser}
-          onClose={() => {
-            setShowChoiceModal(false);
-            router.push('/profile');
-          }}
-          onSelectAddSelf={() => handleChoiceSelect('add-self')}
-          onSelectAddOther={() => handleChoiceSelect('add-new')}
-        />
-      )}
-
-      {showAddModal && currentUser && (
-        <AddModal
-          parentId={null}
-          onClose={handleAddClose}
-          onRefresh={() => {}}
-          mode={addMode}
-          currentUser={addMode === 'add-self' ? currentUser : undefined}
-        />
-      )}
     </>
   );
 }

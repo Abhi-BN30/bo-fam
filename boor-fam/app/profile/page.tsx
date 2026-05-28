@@ -331,7 +331,7 @@ export default function Home() {
           {/* Description Card */}
           <div className="rounded-lg sm:rounded-[2rem] bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/50">
             <h1 className="mt-1 text-2xl sm:text-3xl font-medium uppercase tracking-[0.35em] text-indigo-600">The Home</h1>
-            <p className="mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base leading-7 text-slate-600">
+            <p className="mt-3 sm:mt-4 text-sm sm:text-base leading-7 text-slate-600">
               Born a boorlagadda and aren't sure who our entire family is ?? Well, this is an effort to bring all of us under one roof. 
               Just tap on any of our relatives to know more info. 
               If you or anyone is missing, please add it to the tree to complete our entire family connections
@@ -345,7 +345,7 @@ export default function Home() {
               <div className="flex-1 w-full">
                 <label className="text-[10px] text-slate-400 uppercase font-bold mb-1 block">Person 1</label>
                 <select 
-                  className="w-full border border-slate-200 rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-2/3 border border-slate-200 rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"
                   value={finderSelection.p1}
                   onChange={(e) => setFinderSelection({...finderSelection, p1: e.target.value})}
                 >
@@ -356,7 +356,7 @@ export default function Home() {
               <div className="flex-1 w-full">
                 <label className="text-[10px] text-slate-400 uppercase font-bold mb-1 block">Person 2</label>
                 <select 
-                  className="w-full border border-slate-200 rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-2/3 border border-slate-200 rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"
                   value={finderSelection.p2}
                   onChange={(e) => setFinderSelection({...finderSelection, p2: e.target.value})}
                 >
@@ -426,7 +426,7 @@ export default function Home() {
                   {birthdaysThisMonth.length > 0 ? birthdaysThisMonth.map((u: any) => (
                     <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-rose-50 rounded border border-rose-100">
                       <span className="font-medium text-slate-700">{u.primary_name}</span>
-                      <span className="text-rose-500 font-bold">{parseInt(u.dob.split('-')[2])} {monthName.substring(0, 3)}</span>
+                      <span className="text-rose-500 font-bold">{new Date(u.dob).getUTCDate()} {monthName.substring(0, 3)}</span>
                     </div>
                   )) : (
                     <p className="text-xs text-slate-400 italic">No birthdays this month</p>

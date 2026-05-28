@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
+  const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
@@ -16,9 +17,14 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (pin.length !== 4) {
+      setError("PIN must be exactly 4 digits.");
+      return;
+    }
+
     const res = await fetch('/api/auth', {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, pin: parseInt(pin, 10) }),
       headers: { 'Content-Type': 'application/json' },
     });
 
@@ -27,7 +33,7 @@ export default function LoginPage() {
       localStorage.setItem('user_session', JSON.stringify(data.user));
       router.push('/profile');
     } else {
-      setError("Email not found in our family database.");
+      setError(data.message || "Invalid email or PIN.");
     }
   };
 
@@ -48,6 +54,16 @@ export default function LoginPage() {
             className="w-full border border-slate-200 bg-slate-50/50 p-4 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
             placeholder="Enter your registered email"
             onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            className="w-full border border-slate-200 bg-slate-50/50 p-4 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+            placeholder="Enter your 4-digit PIN"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
             required
           />
           {error && <p className="text-rose-600 text-sm font-medium bg-rose-50 p-3 rounded-xl border border-rose-100">{error}</p>}

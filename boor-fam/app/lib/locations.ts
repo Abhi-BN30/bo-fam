@@ -127,5 +127,6 @@ export const CITIES_BY_COUNTRY: Record<string, string[]> = {
 };
 
 export const getCitiesByCountry = (country: string): string[] => {
-  return CITIES_BY_COUNTRY[country] || [];
+  if (!country) return [];
+  return CITIES_BY_COUNTRY[country.trim()] || [];
 };
