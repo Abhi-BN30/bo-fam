@@ -32,25 +32,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-indigo-50 px-3 sm:px-4 md:px-6">
-      <div className="bg-white p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-indigo-900 mb-4 sm:mb-5 md:mb-6">Family Portal</h1>
-        <p className="text-sm sm:text-base text-gray-600 mb-5 sm:mb-6 md:mb-8 leading-relaxed">Enter your registered email to access our family page.</p>
-        <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-2xl shadow-indigo-100 w-full max-w-md border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-500">
+        <div className="mb-10 text-center">
+          <div className="inline-flex h-14 w-14 bg-indigo-50 rounded-2xl items-center justify-center text-indigo-600 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900">Family Portal</h1>
+          <p className="text-slate-500 mt-2">Welcome back! Please enter your details.</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
           <input
             type="email"
-            className="w-full border-2 border-gray-200 p-2.5 sm:p-3 text-sm sm:text-base text-black placeholder:text-gray-500 rounded-lg sm:rounded-xl focus:border-indigo-500 outline-none transition"
-            placeholder="Your email address"
+            className="w-full border border-slate-200 bg-slate-50/50 p-4 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+            placeholder="Enter your registered email"
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          {error && <p className="text-red-500 text-xs sm:text-sm">{error}</p>}
-          <button type="submit" className="w-full bg-indigo-600 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg sm:rounded-xl font-bold hover:bg-indigo-700 transition">
+          {error && <p className="text-rose-600 text-sm font-medium bg-rose-50 p-3 rounded-xl border border-rose-100">{error}</p>}
+          <button type="submit" className="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95">
             Click here to access our family
           </button>
         </form>
-        <p className="mt-5 sm:mt-6 md:mt-8 text-center text-xs sm:text-sm text-gray-600">
-          New here? <button onClick={() => router.push('/register')} className="text-indigo-600 underline hover:text-indigo-700 transition">Create your Profile</button>
+        <p className="mt-10 text-center text-slate-500 font-medium">
+          New to the family? <button onClick={() => router.push('/register')} className="text-indigo-600 font-bold hover:text-indigo-700 transition">Register here</button>
         </p>
       </div>
     </div>

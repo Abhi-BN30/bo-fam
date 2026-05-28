@@ -16,6 +16,8 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   const [isSaving, setIsSaving] = useState(false);
   const [states, setStates] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
+  const [showCustomCityInput, setShowCustomCityInput] = useState(false);
+  const [customCityValue, setCustomCityValue] = useState('');
 
   const normalizeDob = (value: string | undefined) => {
     if (!value) return '';
@@ -32,48 +34,69 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   }, [initialData]);
 
   const handleCountryChange = (country: string) => {
-    setForm({ ...form, country });
+    setForm({ ...form, country, state: '', city: '' });
     setStates(getStatesByCountry(country));
     setCities(getCitiesByCountry(country));
+    setShowCustomCityInput(false);
+    setCustomCityValue('');
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (mode === 'view') return;
+    
     setError('');
     setIsSaving(true);
 
     try {
+      // Validate primary email
+      if (!form.primary_email) {
+        setError('Primary email is mandatory.');
+        setIsSaving(false);
+        return;
+      }
+
+      // Use custom city value if enabled
+      const finalForm = { ...form };
+      if (showCustomCityInput) {
+        if (!customCityValue.trim()) {
+          setError('Custom city cannot be empty.');
+          setIsSaving(false);
+          return;
+        }
+        finalForm.city = customCityValue.trim();
+      }
+
       const method = mode === 'edit' ? 'PUT' : 'POST';
       const res = await fetch('/api/users', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(finalForm),
       });
-      const data = await res.json();
-
+      
       if (!res.ok) {
+        const data = await res.json();
         setError(data?.error || data?.message || 'Unable to save changes');
         return;
       }
 
-      if (mode === 'edit' && form?.id) {
+      if (mode === 'edit' && finalForm?.id) {
         const stored = localStorage.getItem('user_session');
         const currentSession = stored ? JSON.parse(stored) : null;
-        if (currentSession?.id === form.id) {
-          localStorage.setItem('user_session', JSON.stringify({ ...currentSession, ...form }));
+        if (currentSession?.id === finalForm.id) {
+          localStorage.setItem('user_session', JSON.stringify({ ...currentSession, ...finalForm }));
         }
       }
 
       onRefresh();
       onClose();
     } catch (err) {
-      setError('Unable to save changes.');
+      setError(err instanceof Error ? err.message : 'Unable to save changes.');
       console.error(err);
     } finally {
       setIsSaving(false);
     }
   };
-
   const handleDelete = async () => {
     if (!form?.id) return;
     if (!confirm('Remove this person from the family tree? They will stay in the database and can be added back later if needed.')) return;
@@ -100,65 +123,122 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   };
 
   if (!isOpen) return null;
+
+  const inputStyle = `w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none ${mode === 'view' ? 'bg-slate-100 cursor-not-allowed text-slate-600' : 'bg-slate-50/50'}`;
+  const labelStyle = "text-xs font-bold text-slate-500 ml-1";
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-3 sm:p-4">
-      <form onSubmit={handleSubmit} className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl w-full max-w-sm sm:max-w-md shadow-2xl max-h-[90vh] overflow-auto">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-5 md:mb-6 text-slate-900">{mode === 'edit' ? 'Edit User' : mode === 'add' ? 'Add User' : 'User details'}</h2>
-
-        <div className="space-y-3">
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Full name" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Contact" value={form.contact || ''} onChange={e => setForm({ ...form, contact: e.target.value })} required />
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })} required />
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Primary email" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Spouse Name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Spouse email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
-          
-          {/* Location Section - Country, State, City */}
-          <select disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} value={form.country || ''} onChange={e => handleCountryChange(e.target.value)}>
-            <option value="">Select Country</option>
-            {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-
-          {form.country && states.length > 0 && (
-            <select disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} value={form.state || ''} onChange={e => setForm({ ...form, state: e.target.value })}>
-              <option value="">Select State/Province</option>
-              {states.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-
-          {form.country && cities.length > 0 && (
-            <select disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} value={form.city || ''} onChange={e => setForm({ ...form, city: e.target.value })}>
-              <option value="">Select City</option>
-              {cities.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          )}
-
-          <input disabled={mode === 'view'} className={`w-full border p-2.5 sm:p-3 text-sm sm:text-base mb-0 rounded-lg transition ${mode === 'view' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`} placeholder="Address" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} />
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      <div className="bg-white p-6 sm:p-8 rounded-3xl w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-auto border border-slate-100 animate-in fade-in zoom-in duration-200">
+        <div className="flex flex-col items-center mb-6 text-center">
+          <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-3 text-indigo-600">
+            {mode === 'view' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            )}
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900">{mode === 'edit' ? 'Edit Details' : mode === 'add' ? 'Add User' : 'Profile View'}</h2>
+          <p className="text-sm text-slate-500 mt-1">{mode === 'view' ? 'Reviewing family member information.' : 'Update information to keep the tree accurate.'}</p>
         </div>
 
-        {error && <p className="text-red-500 text-xs sm:text-sm mt-3 sm:mt-4">{error}</p>}
+        {error && <p className="text-rose-600 text-sm mb-6 p-3 bg-rose-50 rounded-xl border border-rose-100 font-medium">{error}</p>}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-1">
+              <label className={labelStyle}>Full Name *</label>
+              <input className={inputStyle} readOnly={mode === 'view'} placeholder="e.g. Ramesh Boorlagadda" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
+            </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-5 sm:mt-6 md:mt-8">
-          {mode === 'edit' ? (
-            <>
-              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition order-3 sm:order-1">Cancel</button>
-              <button type="button" onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-2 sm:order-2">Delete</button>
-              <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-1 sm:order-3">Save</button>
-            </>
-          ) : mode === 'add' ? (
-            <>
-              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition">Cancel</button>
-              <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition">Create</button>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={onClose} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition order-3 sm:order-1">Close</button>
-              <button type="button" onClick={() => { if (typeof onEditRequested === 'function') onEditRequested(); }} className="bg-yellow-500 hover:bg-yellow-600 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-1 sm:order-2">Edit</button>
-              <button type="button" onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white p-2.5 sm:p-3 text-sm sm:text-base rounded-lg transition flex-1 sm:flex-none order-2 sm:order-3">Delete</button>
-            </>
-          )}
-        </div>
-      </form>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className={labelStyle}>Contact Number *</label>
+                <input className={inputStyle} readOnly={mode === 'view'} placeholder="Contact" value={form.contact || ''} onChange={e => setForm({ ...form, contact: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <label className={labelStyle}>Date of Birth *</label>
+                <input className={inputStyle} readOnly={mode === 'view'} type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })} required />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className={labelStyle}>Primary Email *</label>
+              <input className={inputStyle} readOnly={mode === 'view'} placeholder="email@example.com" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} required />
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-2xl space-y-3 border border-slate-100">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Spouse Details (Optional)</p>
+              <input className={`${inputStyle.replace('bg-slate-50/50', 'bg-white')} p-2.5`} readOnly={mode === 'view'} placeholder="Spouse Name" value={form.spouse_name || ''} onChange={e => setForm({ ...form, spouse_name: e.target.value })} />
+              <input className={`${inputStyle.replace('bg-slate-50/50', 'bg-white')} p-2.5`} readOnly={mode === 'view'} placeholder="Spouse Email" type="email" value={form.spouse_email || ''} onChange={e => setForm({ ...form, spouse_email: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Living In</p>
+            <select disabled={mode === 'view'} className={inputStyle} value={form.country || ''} onChange={e => handleCountryChange(e.target.value)}>
+              <option value="">Select Country</option>
+              {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            {form.country && states.length > 0 && (
+              <select disabled={mode === 'view'} className={inputStyle} value={form.state || ''} onChange={e => setForm({ ...form, state: e.target.value })}>
+                <option value="">Select State/Province</option>
+                {states.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
+
+            {form.country && (
+              <select 
+                disabled={mode === 'view'} 
+                className={inputStyle} 
+                value={showCustomCityInput ? 'other' : (form.city || '')} 
+                onChange={e => {
+                  if (e.target.value === 'other') {
+                    setShowCustomCityInput(true);
+                    setForm({ ...form, city: '' });
+                  } else {
+                    setShowCustomCityInput(false);
+                    setCustomCityValue('');
+                    setForm({ ...form, city: e.target.value });
+                  }
+                }}
+              >
+                <option value="">Select City</option>
+                {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                {mode !== 'view' && <option value="other">Other / Not Listed</option>}
+              </select>
+            )}
+
+            {showCustomCityInput && (
+              <input className={`${inputStyle} border-indigo-200 bg-indigo-50/30 animate-in slide-in-from-top-1`} placeholder="Specify City/Town/Village" value={customCityValue} onChange={e => setCustomCityValue(e.target.value)} required />
+            )}
+
+            <div className="space-y-1">
+              <label className={labelStyle}>Full Address</label>
+              <input className={inputStyle} readOnly={mode === 'view'} placeholder="House No, Street, Landmark" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} />
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 mt-8">
+            {mode === 'view' ? (
+              <>
+                <button type="button" onClick={onClose} className="flex-1 bg-slate-100 px-4 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-95">Close</button>
+                <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEditRequested?.(); }} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95">Edit Profile</button>
+                <button type="button" onClick={handleDelete} className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all active:scale-95">Delete</button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={onClose} className="flex-1 bg-slate-100 px-4 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-95">Cancel</button>
+                <button type="submit" disabled={isSaving} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50">
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button type="button" onClick={handleDelete} className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all active:scale-95">Delete</button>
+              </>
+            )}
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

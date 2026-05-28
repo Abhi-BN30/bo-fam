@@ -65,7 +65,8 @@ export const UK_REGIONS = [
 ];
 
 export const getStatesByCountry = (country: string): string[] => {
-  switch (country) {
+  if (!country) return [];
+  switch (country.trim()) {
     case 'India':
       return INDIAN_STATES;
     case 'United States':

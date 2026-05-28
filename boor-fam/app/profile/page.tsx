@@ -78,12 +78,11 @@ export default function Home() {
 
   const openAddModal = (parentId: number | null = null) => {
     setAddParentId(parentId);
-    if (parentId !== null && treeRoots.length > 0) {
+    // Only show ChoiceModal if the user is NOT already in the tree and a parent is selected
+    if (parentId !== null && treeRoots.length > 0 && !userInTree) {
       setShowChoiceModal(true);
-    } else if (parentId === null && treeRoots.length === 0) {
-      setAddMode('add-new');
-      setIsAddModalOpen(true);
     } else {
+      // Bypasses the choice modal if user is already in the tree
       setAddMode('add-new');
       setIsAddModalOpen(true);
     }
@@ -282,12 +281,18 @@ export default function Home() {
   const familyCount = countAllNodes(treeRoots);
   const currentMonth = new Date().getMonth() + 1;
   const monthName = new Date().toLocaleString('default', { month: 'long' });
+
   const birthdaysThisMonth = allUsers.filter((u: any) => {
     if (!u.dob) return false;
-    return parseInt(u.dob.split('-')[1]) === currentMonth;
+    const date = new Date(u.dob);
+    if (isNaN(date.getTime())) return false;
+    
+    // Use UTC month to avoid timezone shifts for Date-only fields
+    const birthMonth = date.getUTCMonth() + 1; 
+    return birthMonth === currentMonth;
   }).sort((a: any, b: any) => {
-    const dayA = parseInt(a.dob.split('-')[2]);
-    const dayB = parseInt(b.dob.split('-')[2]);
+    const dayA = new Date(a.dob).getUTCDate();
+    const dayB = new Date(b.dob).getUTCDate();
     return dayA - dayB;
   });
 
