@@ -70,15 +70,28 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
   // Connector math: 1/4 of card (64px) - Indent (350px) = -286px offset.
   const indentClass = "ml-[300px] sm:ml-[350px]";
   const isOnHighlightPath = highlightPathIds.includes(node.id);
+  const trunkHighlighted = node.children?.some(child => highlightPathIds.includes(child.id));
 
   return (
     <div className="relative flex flex-col items-start">
       {/* Node Content */}
       <div className="flex items-start gap-2 sm:gap-4 mb-6 relative">
-        {/* Horizontal Connector - ends exactly at the trunk line */}
+        {/* Bridging vertical line to children trunk - ensures continuity */}
+        {isExpanded && hasChildren && (
+          <div 
+            className={`absolute left-[56px] sm:left-[64px] transition-colors ${trunkHighlighted ? 'bg-indigo-500' : 'bg-slate-300'}`}
+            style={{ 
+              top: '100%', 
+              bottom: '-1.5rem', // Bridges the mb-6 gap to the children container
+              width: trunkHighlighted ? '4px' : '2px'
+            }} 
+          />
+        )}
+
+        {/* Horizontal Connector */}
         {level > 0 && (
           <div 
-            className={`absolute border-t-2 left-[-244px] w-[244px] sm:left-[-286px] sm:w-[286px] ${isOnHighlightPath ? 'border-indigo-500 z-10' : 'border-slate-300'}`}
+            className={`absolute left-[-244px] w-[244px] sm:left-[-286px] sm:w-[286px] ${isOnHighlightPath ? 'border-indigo-500 border-t-[4px]' : 'border-slate-300 border-t-2'}`}
             style={{ top: '2.5rem' }}
           />
         )}
@@ -186,11 +199,12 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
               <div key={child.id} className="relative">
                 {/* Vertical Trunk Line - starts at parent's 1/4 mark */}
                 <div 
-                  className={`absolute left-[-244px] sm:left-[-286px] w-[2px] transition-colors ${highlightVertical ? 'bg-indigo-500 z-10' : 'bg-slate-300'}`}
+                  className={`absolute left-[-244px] sm:left-[-286px] transition-colors ${highlightVertical ? 'bg-indigo-500 z-10' : 'bg-slate-300'}`}
                   style={{ 
-                    top: idx === 0 ? '-1.5rem' : '0', 
+                    top: 0, 
+                    width: highlightVertical ? '4px' : '2px',
                     height: idx === node.children!.length - 1 
-                      ? (idx === 0 ? '4rem' : '2.5rem') 
+                      ? '2.5rem' 
                       : '100%' 
                   }} 
                 />
