@@ -168,10 +168,10 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
               <label className="text-xs font-bold text-slate-500 ml-1">Primary Email *</label>
               <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" placeholder="email@example.com" type="email" required readOnly={mode === 'add-self'} value={form.primary_email} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
             </div>
-            <div className="space-y-1">
+            {/* <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500 ml-1">Security PIN *</label>
               <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" type="password" inputMode="numeric" maxLength={4} placeholder="4-digit PIN" required readOnly={mode === 'add-self'} value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} />
-            </div>
+            </div> */}
 
             <div className="p-4 bg-slate-50 rounded-2xl space-y-3 border border-slate-100">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Spouse Details (Optional)</p>

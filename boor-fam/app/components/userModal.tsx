@@ -175,10 +175,10 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
               <input className={inputStyle} readOnly={mode === 'view'} placeholder="email@example.com" type="email" value={form.primary_email || ''} onChange={e => setForm({ ...form, primary_email: e.target.value })} required />
             </div>
 
-            <div className="space-y-1">
+            {/* <div className="space-y-1">
               <label className={labelStyle}>Security PIN *</label>
               <input className={inputStyle} type="password" inputMode="numeric" maxLength={4} readOnly={mode === 'view'} placeholder="4-digit PIN" value={form.pin || ''} onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} required />
-            </div>
+            </div> */}
 
             <div className="p-4 bg-slate-50 rounded-2xl space-y-3 border border-slate-100">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Spouse Details (Optional)</p>
