@@ -1,5 +1,6 @@
 ﻿"use client";
 import { useEffect, useState } from 'react';
+import { Great_Vibes, Cormorant_Garamond } from 'next/font/google';
 import { useRouter } from 'next/navigation';
 import FamilyTree, { TreeNode } from '../components/familyTree';
 import AddModal from '../components/addModal';
@@ -8,6 +9,16 @@ import ChoiceModal from '../components/choiceModal';
 import { calculateGeneration, findAllRelationsAtGeneration, FlattenedNode } from '../lib/utils';
 import ProfileDropdown from '../components/profile/ProfileDropdown';
 import PinModal from '../components/profile/PinModal';
+
+const greatVibes = Great_Vibes({
+  subsets: ['latin'],
+  weight: '400',
+});
+
+const cormorantGaramond = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: '400',
+});
 
 
 export default function Home() {
@@ -305,9 +316,13 @@ export default function Home() {
     <div className="min-h-screen w-screen bg-slate-50 text-slate-900">
       <header className="fixed inset-x-0 top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-5 flex-col sm:flex-row">
-          <div>
-            <h1 className="text-xl sm:text-3xl font-semibold text-slate-900">The Boorlagadda's</h1>
-            <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-600">Family Tree</p>
+          <div className="relative">
+            <h1 className={`${greatVibes.className} text-4xl sm:text-6xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none`}>
+              The Boorlagadda's
+            </h1>
+            <p className={`${cormorantGaramond.className} text-base sm:text-xl uppercase tracking-[0.5em] text-indigo-600/100 font-black relative -mt-3 sm:-mt-5 ml-6 sm:ml-8 z-0`}>
+  &nbsp; &nbsp; &nbsp;  Family&nbsp; Tree
+</p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-slate-200 bg-white px-3 sm:px-4 py-2 shadow-sm text-xs sm:text-sm flex-wrap justify-end sm:justify-start">
