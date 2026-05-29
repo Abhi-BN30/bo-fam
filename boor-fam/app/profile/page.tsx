@@ -6,8 +6,13 @@ import AddModal from '../components/addModal';
 import UserModal from '../components/userModal';
 import ChoiceModal from '../components/choiceModal';
 import { calculateGeneration, findAllRelationsAtGeneration, FlattenedNode } from '../lib/utils';
+import ProfileDropdown from '../components/profile/ProfileDropdown';
+import PinModal from '../components/profile/PinModal';
+
 
 export default function Home() {
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+
   const [treeRoots, setTreeRoots] = useState<TreeNode[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addParentId, setAddParentId] = useState<number | null>(null);
@@ -300,7 +305,7 @@ export default function Home() {
     <div className="min-h-screen w-screen bg-slate-50 text-slate-900">
       <header className="fixed inset-x-0 top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-5 flex-col sm:flex-row">
-          <div>            
+          <div>
             <h1 className="text-xl sm:text-3xl font-semibold text-slate-900">The Boorlagadda's</h1>
             <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-600">Family Tree</p>
           </div>
@@ -308,10 +313,19 @@ export default function Home() {
           <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-slate-200 bg-white px-3 sm:px-4 py-2 shadow-sm text-xs sm:text-sm flex-wrap justify-end sm:justify-start">
             {session ? (
               <>
-                <div className="text-xs sm:text-sm">
-                  <div className="font-semibold text-slate-900">{session.primary_name}</div>
-                  <div className="text-xs text-slate-500">{session.spouse_name ? `${session.spouse_name} • ` : ''}{session.primary_email}</div>
-                </div>
+                <ProfileDropdown
+                  userName={session.primary_name}
+                  userEmail={session.spouse_name ? `${session.spouse_name} • ${session.primary_email}` : session.primary_email}
+                  onEditProfile={() => {
+                    setSelectedUser(session);
+                    setUserModalMode('edit');
+                    setIsUserModalOpen(true);
+                  }}
+                  onEditPin={() => {
+                    setIsPinModalOpen(true);
+                  }}
+                />
+
                 <button onClick={logout} className="rounded-full bg-rose-500 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-rose-600 whitespace-nowrap">
                   Logout
                 </button>
@@ -324,6 +338,7 @@ export default function Home() {
           </div>
         </div>
       </header>
+
 
       <main className="mx-auto max-w-7xl px-3 sm:px-6 pb-12 sm:pb-20 pt-28 sm:pt-36">
         {/* Description and Generation - Horizontal Layout */}
@@ -478,6 +493,15 @@ export default function Home() {
           mode={userModalMode}
           initialData={selectedUser}
           onEditRequested={() => setUserModalMode('edit')}
+        />
+      )}
+
+      {isPinModalOpen && session && (
+        <PinModal
+          isOpen={isPinModalOpen}
+          onClose={() => setIsPinModalOpen(false)}
+          email={session.primary_email}
+          onSuccess={() => {}}
         />
       )}
     </div>
