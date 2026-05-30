@@ -150,7 +150,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500 ml-1">Full Name *</label>
-              <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" placeholder="e.g. Ramesh Boorlagadda" required readOnly={mode === 'add-self'} value={form.primary_name} onChange={e => setForm({ ...form, primary_name: e.target.value })} />
+              <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" placeholder="e.g. Satynarana Boorlagadda" required readOnly={mode === 'add-self'} value={form.primary_name} onChange={e => setForm({ ...form, primary_name: e.target.value })} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

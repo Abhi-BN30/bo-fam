@@ -156,7 +156,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
               <label className={labelStyle}>Full Name *</label>
-              <input className={inputStyle} readOnly={mode === 'view'} placeholder="e.g. Ramesh Boorlagadda" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
+              <input className={inputStyle} readOnly={mode === 'view'} placeholder="e.g. Satyanarayana Boorlagadda" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
