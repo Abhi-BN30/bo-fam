@@ -298,13 +298,34 @@ export default function Home() {
   const currentMonth = new Date().getMonth() + 1;
   const monthName = new Date().toLocaleString('default', { month: 'long' });
 
+  console.log(allUsers);
+
   const birthdaysThisMonth = allUsers.filter((u: any) => {
     if (!u.dob) return false;
     const date = new Date(u.dob);
     if (isNaN(date.getTime())) return false;
     
-    // Use UTC month to avoid timezone shifts for Date-only fields
-    const birthMonth = date.getUTCMonth() + 1; 
+    // `dob` is DATE in DB. It may come as 'YYYY-MM-DD' (no timezone) or with
+    // a timezone offset depending on the driver. Use local-safe parsing by
+    // extracting month/day from the ISO date string when possible.
+    const dobRaw = typeof u.dob === 'string' ? u.dob : null;
+    if (dobRaw) {
+      // Expect: YYYY-MM-DD
+      const m = dobRaw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) {
+        const birthMonth = Number(m[2]);
+        return birthMonth === currentMonth;
+      }
+    }
+
+    // Fallback: Date object
+    const birthMonth = date.getMonth() + 1;
+
+    console.log({
+  dob: u.dob,
+  birthMonth,
+  currentMonth
+});
     return birthMonth === currentMonth;
   }).sort((a: any, b: any) => {
     const dayA = new Date(a.dob).getUTCDate();
@@ -417,8 +438,8 @@ export default function Home() {
                   <div className="flex-1 rounded-2xl sm:rounded-3xl bg-indigo-600 px-4 sm:px-5 py-4 sm:py-5 text-white shadow-lg min-w-0 flex flex-col">
                     <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-indigo-200">Your Generation</p>
                     <div className="flex-1 flex flex-col items-center justify-center text-center py-2">
-                      <p className="text-lg sm:text-xl font-semibold">Level {userGeneration}</p>
-                      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{userGeneration === 1 ? 'Family Root' : userGeneration === 2 ? 'Direct descendants' : `Generation ${userGeneration}`}</p>
+                      <p className="text-lg sm:text-2xl font-semibold">Generation {userGeneration}</p>
+                      {/* <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-indigo-100">{userGeneration === 1 ? 'Family Root' : userGeneration === 2 ? 'Direct descendants' : `Generation ${userGeneration}`}</p> */}
                     </div>
                   </div>
                   {relatedUsers.length > 0 && (
@@ -426,9 +447,9 @@ export default function Home() {
                       <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-3">Same Generation</p>
                       <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto">
                         {relatedUsers.map((rel) => (
-                          <div key={rel.user.id} className="text-xs sm:text-sm p-2 bg-slate-50 rounded border border-slate-200">
+                          <div key={rel.user.id} className="text-xs sm:text-sm p-2 bg-indigo-50 rounded border border-slate-200">
                             <span className="font-medium text-slate-700">{rel.user.primary_name}</span>
-                            <span className="text-slate-400 text-[10px] ml-2 italic">({rel.relationship})</span>
+                            <span className="text-indigo-500 font-bold text-[10px] ml-2 ">({rel.relationship})</span>
                           </div>
                         ))}
                       </div>
@@ -454,9 +475,9 @@ export default function Home() {
                 </p>
                 <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto pr-2">
                   {birthdaysThisMonth.length > 0 ? birthdaysThisMonth.map((u: any) => (
-                    <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-rose-50 rounded border border-rose-100">
+                    <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-indigo-50 rounded border border-indigo-100">
                       <span className="font-medium text-slate-700">{u.primary_name}</span>
-                      <span className="text-rose-500 font-bold">{new Date(u.dob).getUTCDate()} {monthName.substring(0, 3)}</span>
+                      <span className="text-indigo-500 font-bold">{new Date(u.dob).getUTCDate()} {monthName.substring(0, 3)}</span>
                     </div>
                   )) : (
                     <p className="text-xs text-slate-400 italic">No birthdays this month</p>

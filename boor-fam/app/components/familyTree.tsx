@@ -130,7 +130,7 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
           {/* Location section - enhanced visibility below names */}
           {(node.city?.trim() || node.state?.trim() || node.country?.trim()) && (
             <div className="mb-3 text-center px-2">
-              <p className="text-[10px] sm:text-[11px] text-slate-600 font-medium leading-tight italic break-words">
+              <p className="text-[12px] sm:text-[11px] text-slate-600 font-medium leading-tight  break-words">
                 {[node.city, node.state, node.country].filter(val => typeof val === 'string' && val.trim() !== "").join(", ")}
               </p>
             </div>
@@ -238,7 +238,7 @@ export default function FamilyTree({ nodes, onShow, onAdd, onReorder, highlightP
   }
 
   return (
-    <div className="w-full overflow-auto border border-slate-200 rounded-lg bg-slate-50 p-8">
+    <div className="w-full overflow-auto border border-slate-200 rounded-lg sm:rounded-[1.5rem] bg-white-50 p-8">
       {/* Reorder Toggle Button */}
       <div className="flex justify-end mb-6">
         <button
