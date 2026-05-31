@@ -298,7 +298,7 @@ export default function Home() {
       // Parent/Child or Aunt/Uncle/Niece/Nephew logic
       if (highDepth === 0) {
         // Direct Parent/Child
-        result = isTargetHigher ? genderize("Nanna", "Amma", "Parent") : genderize("Koduku", "Kuthuru", "Child");
+        result = isTargetHigher ? genderize("Nana", "Amma", "Parent") : genderize("Koduku", "Kuthuru", "Child");
       } else {
         const { isParallel, isCross } = checkLineage();
         if (isTargetHigher) {
