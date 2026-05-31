@@ -51,14 +51,19 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
   useEffect(() => {
     if (form.country) {
       setStates(getStatesByCountry(form.country));
-      setCities(getCitiesByCountry(form.country)); 
+      const fetchedCities = getCitiesByCountry(form.country);
+      setCities(fetchedCities);
+
+      // Check if existing city (e.g. from currentUser in add-self mode) is a custom value
+      const isCustom = form.city && !fetchedCities.includes(form.city);
+      setShowCustomCityInput(!!isCustom);
+      setCustomCityValue(isCustom ? form.city : '');
     } else {
       setStates([]);
       setCities([]);
+      setShowCustomCityInput(false);
+      setCustomCityValue('');
     }
-    // Reset custom city input state when country/state changes
-    setShowCustomCityInput(false);
-    setCustomCityValue('');
   }, [form.country, form.state]);
 
   const handleCountryChange = (country: string) => {

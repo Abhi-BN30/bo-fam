@@ -172,21 +172,31 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
           {node.children!.map((child, idx) => {
             const isChildInPath = highlightPathIds.includes(child.id);
             const isTargetBelowLaterSibling = node.children!.slice(idx + 1).some(sib => highlightPathIds.includes(sib.id));
-            const highlightVertical = isChildInPath || isTargetBelowLaterSibling;
+            const isLastChild = idx === node.children!.length - 1;
 
             return (
               <div key={child.id} className="relative">
-                {/* Vertical Trunk Line - starts at parent's 1/4 mark */}
+                {/* Vertical Trunk Line - Top segment (connects from trunk to this child's connector) */}
                 <div 
-                  className={`absolute left-[-244px] sm:left-[-286px] transition-colors ${highlightVertical ? 'bg-indigo-500 z-10' : 'bg-slate-300'}`}
+                  className={`absolute left-[-244px] sm:left-[-286px] transition-colors ${(isChildInPath || isTargetBelowLaterSibling) ? 'bg-indigo-500 z-10' : 'bg-slate-300'}`}
                   style={{ 
                     top: 0, 
-                    width: highlightVertical ? '4px' : '2px',
-                    height: idx === node.children!.length - 1 
-                      ? '2.5rem' 
-                      : '100%' 
+                    width: (isChildInPath || isTargetBelowLaterSibling) ? '4px' : '2px',
+                    height: '2.5rem' 
                   }} 
                 />
+
+                {/* Vertical Trunk Line - Bottom segment (continues trunk to later siblings) */}
+                {!isLastChild && (
+                  <div 
+                    className={`absolute left-[-244px] sm:left-[-286px] transition-colors ${isTargetBelowLaterSibling ? 'bg-indigo-500 z-10' : 'bg-slate-300'}`}
+                    style={{ 
+                      top: '2.5rem', 
+                      width: isTargetBelowLaterSibling ? '4px' : '2px',
+                      height: 'calc(100% - 2.5rem)' 
+                    }} 
+                  />
+                )}
               <TreeNodeComponent
                 node={child}
                 onShow={onShow}

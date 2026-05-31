@@ -25,11 +25,25 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   };
 
   useEffect(() => {
-    setForm({ ...(initialData || {}), dob: normalizeDob(initialData?.dob) });
+    const data = initialData || {};
+    setForm({ ...data, dob: normalizeDob(data.dob) });
     setError('');
-    if (initialData?.country) {
-      setStates(getStatesByCountry(initialData.country));
-      setCities(getCitiesByCountry(initialData.country));
+
+    if (data.country) {
+      const fetchedStates = getStatesByCountry(data.country);
+      const fetchedCities = getCitiesByCountry(data.country);
+      setStates(fetchedStates);
+      setCities(fetchedCities);
+
+      // Detect if the user has a custom city not present in the standard location list
+      const isCustom = data.city && !fetchedCities.includes(data.city);
+      setShowCustomCityInput(!!isCustom);
+      setCustomCityValue(isCustom ? data.city : '');
+    } else {
+      setStates([]);
+      setCities([]);
+      setShowCustomCityInput(false);
+      setCustomCityValue('');
     }
   }, [initialData]);
 
@@ -236,12 +250,12 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
               >
                 <option value="">Select City</option>
                 {cities.map(c => <option key={c} value={c}>{c}</option>)}
-                {mode !== 'view' && <option value="other">Other / Not Listed</option>}
+                {(mode !== 'view' || showCustomCityInput) && <option value="other">Other / Not Listed</option>}
               </select>
             )}
 
             {showCustomCityInput && (
-              <input className={`${inputStyle} border-indigo-200 bg-indigo-50/30 animate-in slide-in-from-top-1`} placeholder="Specify City/Town/Village" value={customCityValue} onChange={e => setCustomCityValue(e.target.value)} required />
+              <input className={`${inputStyle} border-indigo-200 bg-indigo-50/30 animate-in slide-in-from-top-1`} placeholder="Specify City/Town/Village" value={customCityValue} onChange={e => setCustomCityValue(e.target.value)} required readOnly={mode === 'view'} />
             )}
 
             <div className="space-y-1">

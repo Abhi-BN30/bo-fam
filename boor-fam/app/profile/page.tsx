@@ -345,7 +345,8 @@ export default function Home() {
               <>
                 <ProfileDropdown
                   userName={session.primary_name}
-                  userEmail={session.spouse_name ? `${session.spouse_name} • ${session.primary_email}` : session.primary_email}
+                  // userEmail={session.spouse_name ? `${session.spouse_name} • ${session.primary_email}` : session.primary_email}
+                  userEmail={session.primary_email}
                   onEditProfile={() => {
                     setSelectedUser(session);
                     setUserModalMode('edit');
