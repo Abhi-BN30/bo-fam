@@ -189,7 +189,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
               <input className={inputStyle} readOnly={mode === 'view'} placeholder="e.g. Satyanarayana Boorlagadda" value={form.primary_name || ''} onChange={e => setForm({ ...form, primary_name: e.target.value })} required />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className={labelStyle}>Contact Number *</label>
                 <input className={inputStyle} readOnly={mode === 'view'} placeholder="Contact" value={form.contact || ''} onChange={e => setForm({ ...form, contact: e.target.value })} required />
@@ -197,6 +197,21 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
               <div className="space-y-1">
                 <label className={labelStyle}>Date of Birth *</label>
                 <input className={inputStyle} readOnly={mode === 'view'} type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <label className={labelStyle}>Gender *</label>
+                <select 
+                  className={inputStyle} 
+                  disabled={mode === 'view'} 
+                  value={form.gender || ''} 
+                  onChange={e => setForm({ ...form, gender: e.target.value })} 
+                  required
+                >
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Others">Others</option>
+                </select>
               </div>
             </div>
 

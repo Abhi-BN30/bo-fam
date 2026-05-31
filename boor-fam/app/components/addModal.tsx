@@ -18,6 +18,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     contact: currentUser.contact || '',
     spouse_contact: currentUser.spouse_contact || '',
     dob: currentUser.dob || '',
+    gender: currentUser.gender || '',
     address: currentUser.address || '',
     country: currentUser.country || '',
     state: currentUser.state || '',
@@ -32,6 +33,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     spouse_contact: '',
     contact: '',
     dob: '',
+    gender: '',
     address: '',
     country: '',
     state: '',
@@ -174,7 +176,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
               <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" placeholder="e.g. Satynarana Boorlagadda" required readOnly={mode === 'add-self'} value={form.primary_name} onChange={e => setForm({ ...form, primary_name: e.target.value })} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 ml-1">Contact Number *</label>
                 <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" placeholder="Contact" required readOnly={mode === 'add-self'} value={form.contact} onChange={e => setForm({ ...form, contact: e.target.value })} />
@@ -182,6 +184,21 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 ml-1">Date of Birth *</label>
                 <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" type="date" required readOnly={mode === 'add-self'} value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 ml-1">Gender *</label>
+                <select 
+                  className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" 
+                  required 
+                  disabled={mode === 'add-self'}
+                  value={form.gender} 
+                  onChange={e => setForm({ ...form, gender: e.target.value })}
+                >
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Others">Others</option>
+                </select>
               </div>
             </div>
 
