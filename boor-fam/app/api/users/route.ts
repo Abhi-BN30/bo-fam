@@ -4,21 +4,7 @@ import { NextResponse } from 'next/server';
 const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(req: Request) {
-  const {
-    primary_name,
-    spouse_name,
-    primary_email,
-    dob,
-    parent_id,
-    contact,
-    spouse_email,
-    address,
-    city,
-    state,
-    country,
-    spouse_contact,
-    pin,
-  } = await req.json();
+  const {primary_name,spouse_name,primary_email,dob,parent_id,contact,spouse_email,address,city,state,country,spouse_contact,pin,} = await req.json();
 
   // Ensure we always insert a non-null PIN (users.pin is NOT NULL in DB)
   const parsedPin = typeof pin === 'number' ? pin : Number(pin);
@@ -27,36 +13,7 @@ export async function POST(req: Request) {
   }
 
   const res = await sql`
-    INSERT INTO users (
-      primary_name,
-      spouse_name,
-      primary_email,
-      dob,
-      contact,
-      spouse_email,
-      address,
-      city,
-      state,
-      country,
-      spouse_contact,
-      pin
-    )
-    VALUES (
-      ${primary_name},
-      ${spouse_name},
-      ${primary_email},
-      ${dob},
-      ${contact},
-      ${spouse_email},
-      ${address || null},
-      ${city || null},
-      ${state || null},
-      ${country || null},
-      ${spouse_contact || null},
-      ${parsedPin}
-    )
-    RETURNING id
-  `;
+    INSERT INTO users (primary_name,spouse_name,primary_email,dob,contact,spouse_email,address,city,state,country,spouse_contact,pin) VALUES (${primary_name},${spouse_name},${primary_email},${dob},${contact},${spouse_email},${address || null},${city || null},${state || null},${country || null},${spouse_contact || null},${parsedPin}) RETURNING id`;
 
   if (parent_id) {
     await sql`INSERT INTO family_tree (user_id, parent_id) VALUES (${res[0].id}, ${parent_id})`;
