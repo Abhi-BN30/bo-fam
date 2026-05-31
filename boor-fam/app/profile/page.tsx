@@ -216,13 +216,15 @@ export default function Home() {
     if (!id1 || !id2) return;
     if (id1 === id2) { setRelationshipResult("Same person!"); return; }
 
-    const getPath = (id: number) => {
+    const getUser = (id: number) => allUsers.find((u: any) => u.id === id);
+
+    const getPath = (id: number): any[] => {
       const path = [];
       let currId: number | undefined | null = id;
       while (currId) {
-        const node = allUsers.find((u: any) => u.id === currId);
+        const node = getUser(currId);
         if (!node) break;
-        path.push({ id: node.id, name: node.primary_name });
+        path.push(node);
         currId = node.parent_id;
       }
       return path;
@@ -231,7 +233,7 @@ export default function Home() {
     const path1 = getPath(id1);
     const path2 = getPath(id2);
 
-    let lca = null;
+    let lca: any = null;
     let d1 = -1, d2 = -1;
 
     for (let i = 0; i < path1.length; i++) {
@@ -243,29 +245,110 @@ export default function Home() {
 
     if (!lca) { setRelationshipResult("No direct blood relation found."); return; }
 
+    const target = path2[0];
+    const targetGender = (target.gender || '').toLowerCase();
+
+    // Helper to select term based on target gender
+    const genderize = (male: string, female: string, other: string) => {
+      if (targetGender === 'male') return male;
+      if (targetGender === 'female') return female;
+      return other;
+    };
+
     let result = "";
+    
+    // 1. Direct Ancestors / Descendants
     if (d1 === 0 || d2 === 0) {
       const dist = Math.max(d1, d2);
-      const isAncestor = d1 === 0;
-      if (dist === 1) result = isAncestor ? "Parent" : "Child";
-      else if (dist === 2) result = isAncestor ? "Grandparent" : "Grandchild";
-      else {
+      const isTargetHigher = d1 > d2; // P2 is parent/grandparent
+
+      if (dist === 1) {
+        result = isTargetHigher ? genderize("Nana", "Amma", "Parent") : genderize("Koduku", "Kuthuru", "Child");
+      } else if (dist === 2) {
+        result = isTargetHigher ? genderize("Thatha", "Nanamma/Ammamma", "Grandparent") : genderize("Manavadu", "Manavaraalu", "Grandchild");
+      } else {
         const greats = "Great-".repeat(dist - 2);
-        result = `${greats}${isAncestor ? "Grandparent" : "Grandchild"}`;
+        const base = isTargetHigher ? genderize("Grandparent", "Grandparent", "Grandparent") : genderize("Manavadu", "Manavaraalu", "Grandchild");
+        result = `${greats}${base}`;
       }
-    } else if (d1 === 1 && d2 === 1) result = "Sibling";
+    } 
+    // 2. Siblings
+    else if (d1 === 1 && d2 === 1) {
+      result = genderize("Annayya/Thammudu", "Akka/Chelli", "Sibling");
+    } 
+    // 3. Aunts, Uncles, Nieces, Nephews (One generation offset from LCA branch)
     else if (d1 === 1 || d2 === 1) {
-      const dist = Math.max(d1, d2);
-      const isNieceNephew = d1 > d2;
-      result = `${"Great-".repeat(Math.max(0, dist - 2))}${isNieceNephew ? "Niece/Nephew" : "Aunt/Uncle"}`;
-    } else {
+      if (d1 > d2) {
+        // P2 is higher (Aunt/Uncle level)
+        const viewerParent = path1[d1 - 1]; // Viewer's ancestor who is sibling of Target
+        const parentGender = (viewerParent.gender || '').toLowerCase();
+
+        if (parentGender === 'male') {
+          // Paternal side
+          result = genderize("Peddanana/Babai", "Atta", "Paternal Aunt/Uncle");
+        } else if (parentGender === 'female') {
+          // Maternal side
+          result = genderize("Mavayya", "Peddamma/Pinni", "Maternal Aunt/Uncle");
+        } else {
+          result = genderize("Uncle", "Aunt", "Aunt/Uncle");
+        }
+
+        // Handle Grandparents' siblings or higher
+        if (d1 >= 3) {
+          // Cultural special case: grandparent's brother is often just called Thatha, 
+          // or we can use Great- logic. The prompt suggests manavadu/manavaraalu for the reciprocal.
+          const greats = "Great-".repeat(d1 - 2);
+          result = `${greats}${result}`;
+        }
+      } else {
+        // P2 is lower (Niece/Nephew level)
+        const viewerSibling = path2[d2 - 1]; // Sibling of Viewer who is ancestor of Target
+        const siblingGender = (viewerSibling.gender || '').toLowerCase();
+
+        if (siblingGender === 'male') {
+          result = genderize("Anna/Thammudu Koduku", "Anna/Thammudu Kuthuru", "Nephew/Niece");
+        } else if (siblingGender === 'female') {
+          result = genderize("Alludu", "Kodalu", "Niece/Nephew");
+        } else {
+          result = genderize("Nephew", "Niece", "Niece/Nephew");
+        }
+
+        if (d2 >= 3) {
+          const greats = "Great-".repeat(d2 - 2);
+          result = `${greats}${result}`;
+        }
+      }
+    } 
+    // 4. Cousins and Distant Relatives
+    else {
+      // Determine Parallel vs Cross Cousins based on the gender of ancestors just below LCA
+      const a1 = path1[d1 - 1]; // Viewer's ancestor below LCA
+      const a2 = path2[d2 - 1]; // Target's ancestor below LCA
+      const g1 = (a1.gender || '').toLowerCase();
+      const g2 = (a2.gender || '').toLowerCase();
+
+      const isParallel = (g1 === g2) && (g1 === 'male' || g1 === 'female');
+      const isCross = (g1 !== g2) && (g1 === 'male' || g1 === 'female') && (g2 === 'male' || g2 === 'female');
+
       const degree = Math.min(d1, d2) - 1;
       const removed = Math.abs(d1 - d2);
+
+      let baseTerm = "Cousin";
+      if (isParallel) {
+        baseTerm = genderize("Annayya/Thammudu", "Akka/Chelli", "Cousin");
+      } else if (isCross) {
+        baseTerm = genderize("Bava/Mardi", "Vadina/Mardalu", "Cousin");
+      }
+
+      if (degree === 1 && removed === 0) {
+        result = baseTerm;
+      } else {
       const ordinal = (n: number) => {
         const s = ["th", "st", "nd", "rd"], v = n % 100;
         return n + (s[(v - 20) % 10] || s[v] || s[0]);
       };
-      result = `${ordinal(degree)} Cousin${removed > 0 ? ` ${removed}x removed` : ""}`;
+        result = `${ordinal(degree)} ${baseTerm}${removed > 0 ? ` ${removed}x removed` : ""}`;
+      }
     }
     setRelationshipResult(result);
   };
