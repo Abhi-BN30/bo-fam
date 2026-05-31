@@ -298,7 +298,6 @@ export default function Home() {
   const currentMonth = new Date().getMonth() + 1;
   const monthName = new Date().toLocaleString('default', { month: 'long' });
 
-  console.log(allUsers);
 
   const birthdaysThisMonth = allUsers.filter((u: any) => {
     if (!u.dob) return false;
@@ -321,11 +320,6 @@ export default function Home() {
     // Fallback: Date object
     const birthMonth = date.getMonth() + 1;
 
-    console.log({
-  dob: u.dob,
-  birthMonth,
-  currentMonth
-});
     return birthMonth === currentMonth;
   }).sort((a: any, b: any) => {
     const dayA = new Date(a.dob).getUTCDate();
@@ -338,12 +332,12 @@ export default function Home() {
       <header className="fixed inset-x-0 top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-5 flex-col sm:flex-row">
           <div className="relative">
-            <h1 className={`${greatVibes.className} text-4xl sm:text-6xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none`}>
+            <h1 className={`${greatVibes.className} text-4xl sm:text-5xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none`}>
               The Boorlagadda's
             </h1>
-            <p className={`${cormorantGaramond.className} text-base sm:text-xl uppercase tracking-[0.5em] text-indigo-600/100 font-black relative -mt-3 sm:-mt-5 ml-6 sm:ml-8 z-0`}>
-  &nbsp; &nbsp; &nbsp;  Family&nbsp; Tree
-</p>
+            <p className={`${cormorantGaramond.className} text-base sm:text-lg uppercase tracking-[0.5em] text-indigo-600 font-black relative ml-6 sm:ml-8 z-0`}> 
+              Family Tree 
+            </p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-slate-200 bg-white px-3 sm:px-4 py-2 shadow-sm text-xs sm:text-sm flex-wrap justify-end sm:justify-start">

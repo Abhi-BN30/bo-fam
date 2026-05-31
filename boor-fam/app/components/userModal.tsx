@@ -110,15 +110,21 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
     if (!confirm('Remove this person from the family tree? They will stay in the database and can be added back later if needed.')) return;
 
     try {
-      const res = await fetch('/api/tree/remove-from-tree', {
+      const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: form.id }),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data?.error || 'Unable to delete user.');
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setError(data?.error || data?.message || 'Unable to delete user.');
+        } else {
+          const text = await res.text();
+          setError(text || 'An unexpected error occurred while trying to delete the user.');
+        }
         return;
       }
 
@@ -137,7 +143,17 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <div className="bg-white p-6 sm:p-8 rounded-3xl w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-auto border border-slate-100 animate-in fade-in zoom-in duration-200">
+      <div className="relative bg-white p-6 sm:p-8 rounded-3xl w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-auto border border-slate-100 animate-in fade-in zoom-in duration-200">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors z-10"
+          title="Close"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <div className="flex flex-col items-center mb-6 text-center">
           <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-3 text-indigo-600">
             {mode === 'view' ? (
@@ -237,13 +253,11 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
           <div className="flex flex-col sm:flex-row gap-3 mt-8">
             {mode === 'view' ? (
               <>
-                <button type="button" onClick={onClose} className="flex-1 bg-slate-100 px-4 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-95">Close</button>
                 <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEditRequested?.(); }} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95">Edit Profile</button>
                 <button type="button" onClick={handleDelete} className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all active:scale-95">Delete</button>
               </>
             ) : (
               <>
-                <button type="button" onClick={onClose} className="flex-1 bg-slate-100 px-4 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-95">Cancel</button>
                 <button type="submit" disabled={isSaving} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50">
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>

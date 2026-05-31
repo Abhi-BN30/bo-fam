@@ -111,10 +111,16 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
         }
       } else {
         // For Add New: create new user
+        const pinDigits = finalForm.pin?.toString().replace(/\D/g, '') ?? '';
+        const parsedPin = Number(pinDigits);
+
         const res = await fetch('/api/users', { // Use finalForm for submission
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...finalForm, pin: parseInt(finalForm.pin, 10) }),
+          body: JSON.stringify({
+            ...finalForm,
+            pin: parsedPin,
+          }),
         });
 
         if (!res.ok) {
@@ -135,7 +141,17 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl w-full sm:max-w-md max-h-[90vh] overflow-auto border border-slate-100 animate-in fade-in zoom-in duration-200">
+      <div className="relative bg-white p-6 sm:p-8 rounded-3xl shadow-2xl w-full sm:max-w-md max-h-[90vh] overflow-auto border border-slate-100 animate-in fade-in zoom-in duration-200">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors z-10"
+          title="Close"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <div className="flex flex-col items-center mb-6 text-center">
           <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-3 text-indigo-600">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -168,10 +184,10 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
               <label className="text-xs font-bold text-slate-500 ml-1">Primary Email *</label>
               <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" placeholder="email@example.com" type="email" required readOnly={mode === 'add-self'} value={form.primary_email} onChange={e => setForm({ ...form, primary_email: e.target.value })} />
             </div>
-            {/* <div className="space-y-1">
+            <div className="space-y-1">
               <label className="text-xs font-bold text-slate-500 ml-1">Security PIN *</label>
               <input className="w-full border border-slate-200 p-3 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-slate-50/50" type="password" inputMode="numeric" maxLength={4} placeholder="4-digit PIN" required readOnly={mode === 'add-self'} value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} />
-            </div> */}
+            </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl space-y-3 border border-slate-100">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Spouse Details (Optional)</p>
@@ -238,9 +254,6 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
           </div>
 
           <div className="flex gap-3 mt-8">
-            <button type="button" onClick={onClose} className="flex-1 bg-slate-100 px-4 py-3 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-95">
-              Cancel
-            </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50">
               {isSubmitting ? 'Processing...' : 'Save Member'}
             </button>
