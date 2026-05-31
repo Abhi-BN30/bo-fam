@@ -24,15 +24,27 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const { id } = await req.json();
 
-  const recs = await sql`SELECT user_id FROM family_tree WHERE parent_id = ${id}`;
+  // 1. Recursively find all descendant IDs in the subtree starting from 'id'
+  const subtree = await sql`
+    WITH RECURSIVE descendants AS (
+      SELECT ${id}::int AS id
+      UNION ALL
+      SELECT ft.user_id
+      FROM family_tree ft
+      JOIN descendants d ON ft.parent_id = d.id
+    )
+    SELECT id FROM descendants
+  `;
 
-  await sql`DELETE FROM family_tree WHERE user_id = ${id} OR parent_id = ${id}`;
-  await sql`DELETE FROM users WHERE id = ${id}`;
+  const allIds = subtree.map((r: any) => r.id);
 
-  const childIds = recs.map((r: any) => r.user_id);
-  if (childIds.length > 0) {
-    await sql`DELETE FROM users WHERE id = ANY(${childIds}::int[])`;
+  if (allIds.length > 0) {
+    // 2. Remove all hierarchy links involving these users
+    await sql`DELETE FROM family_tree WHERE user_id = ANY(${allIds}::int[]) OR parent_id = ANY(${allIds}::int[])`;
+    // 3. Delete the user records themselves
+    await sql`DELETE FROM users WHERE id = ANY(${allIds}::int[])`;
   }
+
   return NextResponse.json({ success: true });
 }
 

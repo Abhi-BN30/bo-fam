@@ -35,36 +35,13 @@ interface TreeNodeProps {
   totalSiblings?: number;
   isReorderMode: boolean;
   highlightPathIds: number[];
+  onMove?: (direction: 'up' | 'down') => void;
 }
 
-function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childIndex = 0, totalSiblings = 1, isReorderMode, highlightPathIds }: TreeNodeProps) {
+function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childIndex = 0, totalSiblings = 1, isReorderMode, highlightPathIds, onMove }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const hasChildren = node.children && node.children.length > 0;
-
-  const handleMoveChild = (childId: number, direction: 'up' | 'down') => {
-    if (!hasChildren || !node.children) return;
-
-    const children = [...node.children];
-    const currentIndex = children.findIndex(c => c.id === childId);
-    
-    if (currentIndex === -1) return;
-
-    if (direction === 'up' && currentIndex > 0) {
-      [children[currentIndex], children[currentIndex - 1]] = [children[currentIndex - 1], children[currentIndex]];
-    } else if (direction === 'down' && currentIndex < children.length - 1) {
-      [children[currentIndex], children[currentIndex + 1]] = [children[currentIndex + 1], children[currentIndex]];
-    } else {
-      return;
-    }
-
-    const updates = children.map((child, idx) => ({
-      user_id: child.id,
-      order: idx,
-    }));
-
-    onReorder?.(node.id, updates);
-  };
 
   // Indent matches previous turn. 
   // Connector math: 1/4 of card (64px) - Indent (350px) = -286px offset.
@@ -167,10 +144,10 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
         </div>
 
         {/* Reorder buttons - Moved to the right */}
-        {level > 0 && isReorderMode && (
+        {isReorderMode && totalSiblings > 1 && (
           <div className="flex flex-col gap-1 pt-4">
             <button
-              onClick={() => handleMoveChild(node.id, 'up')}
+              onClick={() => onMove?.('up')}
               disabled={childIndex === 0}
               className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
               title="Move up"
@@ -178,7 +155,7 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
               ↑
             </button>
             <button
-              onClick={() => handleMoveChild(node.id, 'down')}
+              onClick={() => onMove?.('down')}
               disabled={childIndex === totalSiblings - 1}
               className="px-2 py-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition min-w-max"
               title="Move down"
@@ -220,6 +197,18 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
                 totalSiblings={node.children!.length}
                 isReorderMode={isReorderMode}
                 highlightPathIds={highlightPathIds}
+                onMove={(direction) => {
+                  if (!node.children) return;
+                  const newChildren = [...node.children];
+                  const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+                  if (targetIdx >= 0 && targetIdx < newChildren.length) {
+                    [newChildren[idx], newChildren[targetIdx]] = [newChildren[targetIdx], newChildren[idx]];
+                    onReorder?.(node.id, newChildren.map((c, i) => ({
+                      user_id: c.id,
+                      order: i,
+                    })));
+                  }
+                }}
               />
               </div>
             );
@@ -254,7 +243,7 @@ export default function FamilyTree({ nodes, onShow, onAdd, onReorder, highlightP
       </div>
 
       <div className="relative space-y-12">
-        {nodes.map((root) => (
+        {nodes.map((root, idx) => (
           <TreeNodeComponent
             key={root.id}
             node={root}
@@ -262,8 +251,21 @@ export default function FamilyTree({ nodes, onShow, onAdd, onReorder, highlightP
             onAdd={onAdd}
             onReorder={onReorder}
             level={0}
+            childIndex={idx}
+            totalSiblings={nodes.length}
             isReorderMode={isReorderMode}
             highlightPathIds={highlightPathIds}
+            onMove={(direction) => {
+              const newRoots = [...nodes];
+              const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+              if (targetIdx >= 0 && targetIdx < newRoots.length) {
+                [newRoots[idx], newRoots[targetIdx]] = [newRoots[targetIdx], newRoots[idx]];
+                onReorder?.(0, newRoots.map((n, i) => ({
+                  user_id: n.id,
+                  order: i,
+                })));
+              }
+            }}
           />
         ))}
       </div>
