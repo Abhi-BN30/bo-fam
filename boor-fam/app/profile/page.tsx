@@ -247,109 +247,99 @@ export default function Home() {
 
     const target = path2[0];
     const targetGender = (target.gender || '').toLowerCase();
+    const viewer = path1[0];
+    const viewerGender = (viewer.gender || '').toLowerCase();
 
-    // Helper to select term based on target gender
     const genderize = (male: string, female: string, other: string) => {
       if (targetGender === 'male') return male;
       if (targetGender === 'female') return female;
       return other;
     };
 
+    const isTargetHigher = d1 > d2;
+    const delta = Math.abs(d1 - d2);
+    const highDepth = Math.min(d1, d2);
+    const lowDepth = Math.max(d1, d2);
+    const pathHigh = isTargetHigher ? path2 : path1;
+    const pathLow = isTargetHigher ? path1 : path2;
+
     let result = "";
-    
-    // 1. Direct Ancestors / Descendants
-    if (d1 === 0 || d2 === 0) {
-      const dist = Math.max(d1, d2);
-      const isTargetHigher = d1 > d2; // P2 is parent/grandparent
 
-      if (dist === 1) {
-        result = isTargetHigher ? genderize("Nana", "Amma", "Parent") : genderize("Koduku", "Kuthuru", "Child");
-      } else if (dist === 2) {
-        result = isTargetHigher ? genderize("Thatha", "Nanamma/Ammamma", "Grandparent") : genderize("Manavadu", "Manavaraalu", "Grandchild");
-      } else {
-        const greats = "Great-".repeat(dist - 2);
-        const base = isTargetHigher ? genderize("Grandparent", "Grandparent", "Grandparent") : genderize("Manavadu", "Manavaraalu", "Grandchild");
-        result = `${greats}${base}`;
-      }
-    } 
-    // 2. Siblings
-    else if (d1 === 1 && d2 === 1) {
-      result = genderize("Annayya/Thammudu", "Akka/Chelli", "Sibling");
-    } 
-    // 3. Aunts, Uncles, Nieces, Nephews (One generation offset from LCA branch)
-    else if (d1 === 1 || d2 === 1) {
-      if (d1 > d2) {
-        // P2 is higher (Aunt/Uncle level)
-        const viewerParent = path1[d1 - 1]; // Viewer's ancestor who is sibling of Target
-        const parentGender = (viewerParent.gender || '').toLowerCase();
-
-        if (parentGender === 'male') {
-          // Paternal side
-          result = genderize("Peddanana/Babai", "Atta", "Paternal Aunt/Uncle");
-        } else if (parentGender === 'female') {
-          // Maternal side
-          result = genderize("Mavayya", "Peddamma/Pinni", "Maternal Aunt/Uncle");
-        } else {
-          result = genderize("Uncle", "Aunt", "Aunt/Uncle");
-        }
-
-        // Handle Grandparents' siblings or higher
-        if (d1 >= 3) {
-          // Cultural special case: grandparent's brother is often just called Thatha, 
-          // or we can use Great- logic. The prompt suggests manavadu/manavaraalu for the reciprocal.
-          const greats = "Great-".repeat(d1 - 2);
-          result = `${greats}${result}`;
-        }
-      } else {
-        // P2 is lower (Niece/Nephew level)
-        const viewerSibling = path2[d2 - 1]; // Sibling of Viewer who is ancestor of Target
-        const siblingGender = (viewerSibling.gender || '').toLowerCase();
-
-        if (siblingGender === 'male') {
-          result = genderize("Anna/Thammudu Koduku", "Anna/Thammudu Kuthuru", "Nephew/Niece");
-        } else if (siblingGender === 'female') {
-          result = genderize("Alludu", "Kodalu", "Niece/Nephew");
-        } else {
-          result = genderize("Nephew", "Niece", "Niece/Nephew");
-        }
-
-        if (d2 >= 3) {
-          const greats = "Great-".repeat(d2 - 2);
-          result = `${greats}${result}`;
-        }
-      }
-    } 
-    // 4. Cousins and Distant Relatives
-    else {
-      // Determine Parallel vs Cross Cousins based on the gender of ancestors just below LCA
-      const a1 = path1[d1 - 1]; // Viewer's ancestor below LCA
-      const a2 = path2[d2 - 1]; // Target's ancestor below LCA
-      const g1 = (a1.gender || '').toLowerCase();
-      const g2 = (a2.gender || '').toLowerCase();
-
-      const isParallel = (g1 === g2) && (g1 === 'male' || g1 === 'female');
-      const isCross = (g1 !== g2) && (g1 === 'male' || g1 === 'female') && (g2 === 'male' || g2 === 'female');
-
-      const degree = Math.min(d1, d2) - 1;
-      const removed = Math.abs(d1 - d2);
-
-      let baseTerm = "Cousin";
-      if (isParallel) {
-        baseTerm = genderize("Annayya/Thammudu", "Akka/Chelli", "Cousin");
-      } else if (isCross) {
-        baseTerm = genderize("Bava/Mardi", "Vadina/Mardalu", "Cousin");
-      }
-
-      if (degree === 1 && removed === 0) {
-        result = baseTerm;
-      } else {
-      const ordinal = (n: number) => {
-        const s = ["th", "st", "nd", "rd"], v = n % 100;
-        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    // Helper to determine Parallel vs Cross based on ancestors at LCA level
+    const checkLineage = () => {
+      if (highDepth === 0) return { isParallel: true, isCross: false };
+      const aHigh = pathHigh[highDepth - 1];
+      const aLow = pathLow[lowDepth - 1];
+      const gHigh = (aHigh.gender || '').toLowerCase();
+      const gLow = (pathLow[highDepth - 1].gender || '').toLowerCase();
+      return {
+        isParallel: gHigh === gLow && gHigh !== '',
+        isCross: gHigh !== gLow && gHigh !== '' && gLow !== '',
+        gHigh,
+        gLow
       };
-        result = `${ordinal(degree)} ${baseTerm}${removed > 0 ? ` ${removed}x removed` : ""}`;
+    };
+
+    if (delta >= 2) {
+      // Grandparent/Grandchild logic (Simplified to standard terms for grand-relatives)
+      if (isTargetHigher) {
+        if (targetGender === 'male') result = "Thathayya";
+        else if (targetGender === 'female') {
+          const branchAncestor = pathLow[lowDepth - 1]; // Lineage start at LCA
+          result = (branchAncestor.gender || '').toLowerCase() === 'male' ? "Nanamma" : "Ammamma";
+        } else result = "Grandparent";
+        
+        if (highDepth === 0 && delta > 2) result = "Great-" + result;
+      } else {
+        result = genderize("Manavadu", "Manavaraalu", "Grandchild");
+        if (highDepth === 0 && delta > 2) result = "Great-" + result;
+      }
+    } else if (delta === 1) {
+      // Parent/Child or Aunt/Uncle/Niece/Nephew logic
+      if (highDepth === 0) {
+        // Direct Parent/Child
+        result = isTargetHigher ? genderize("Nanna", "Amma", "Parent") : genderize("Koduku", "Kuthuru", "Child");
+      } else {
+        const { isParallel, isCross } = checkLineage();
+        if (isTargetHigher) {
+          // Target is Aunt/Uncle level
+          if (isParallel) result = genderize("Peddanana/Babai", "Peddamma/Pinni", "Aunt/Uncle");
+          else if (isCross) result = genderize("Mavayya", "Atta", "Aunt/Uncle");
+          else result = genderize("Uncle", "Aunt", "Aunt/Uncle");
+        } else {
+          // Target is Niece/Nephew level
+          // Logic: "Parallel" sibling's kids are like own kids, "Cross" sibling's kids are Alludu/Kodalu
+          const viewerSideGender = (pathHigh[highDepth - 1].gender || '').toLowerCase();
+          const isViewerMale = viewerGender === 'male';
+          
+          if (isParallel) {
+            const prefix = isViewerMale ? "Anna/Thammudu" : "Akka/Chelli";
+            result = `${prefix} ${genderize("Koduku", "Kuthuru", "Child")}`;
+          } else {
+            result = genderize("Alludu", "Kodalu", "Niece/Nephew");
+          }
+        }
+      }
+    } else {
+      // Same generation: Siblings or Cousins
+      if (highDepth === 1) {
+        result = genderize("Annayya/Thammudu", "Akka/Chelli", "Sibling");
+      } else {
+        const { isParallel, isCross } = checkLineage();
+        const degree = highDepth - 1;
+        const ordinal = (n: number) => {
+          const s = ["th", "st", "nd", "rd"], v = n % 100;
+          return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        };
+
+        let base = "Cousin";
+        if (isParallel) base = genderize("Annayya/Thammudu", "Akka/Chelli", "Cousin");
+        else if (isCross) base = genderize("Bava/Mardi", "Vadina/Mardalu", "Cousin");
+
+        result = degree === 1 ? base : `${ordinal(degree)} ${base}`;
       }
     }
+
     setRelationshipResult(result);
   };
 
