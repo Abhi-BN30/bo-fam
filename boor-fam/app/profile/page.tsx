@@ -497,9 +497,9 @@ export default function Home() {
             <h2 className="text-sm font-semibold uppercase tracking-widest text-indigo-600 mb-4">Relationship Finder</h2>
             <div className="flex flex-col sm:flex-row items-end gap-4">
               <div className="flex-1 w-full">
-                <label className="text-[10px] text-slate-400 uppercase font-bold mb-1 block">Person 1</label>
+                <label className="text-[10px] text-indigo-500 uppercase font-bold mb-1 block">Person 1</label>
                 <select 
-                  className="w-2/3 border border-slate-200 rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-2/3 p-2 text-xs sm:text-sm bg-indigo-50 border border-slate-200 rounded-lg shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   value={finderSelection.p1}
                   onChange={(e) => setFinderSelection({...finderSelection, p1: e.target.value})}
                 >
@@ -508,9 +508,9 @@ export default function Home() {
                 </select>
               </div>
               <div className="flex-1 w-full">
-                <label className="text-[10px] text-slate-400 uppercase font-bold mb-1 block">Person 2</label>
+                <label className="text-[10px] text-indigo-500 uppercase font-bold mb-1 block">Person 2</label>
                 <select 
-                  className="w-2/3 border border-slate-200 rounded-lg p-2 text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-2/3 p-2 text-xs sm:text-sm bg-indigo-50 border border-slate-200 rounded-lg shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   value={finderSelection.p2}
                   onChange={(e) => setFinderSelection({...finderSelection, p2: e.target.value})}
                 >
@@ -550,7 +550,7 @@ export default function Home() {
                       <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-3">Same Generation</p>
                       <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto">
                         {relatedUsers.map((rel) => (
-                          <div key={rel.user.id} className="text-xs sm:text-sm p-2 bg-indigo-50 rounded border border-slate-200">
+                          <div key={rel.user.id} className="text-xs sm:text-sm p-2 bg-indigo-50 rounded-lg border border-slate-200">
                             <span className="font-medium text-slate-700">{rel.user.primary_name}</span>
                             <span className="text-indigo-500 font-bold text-[10px] ml-2 ">({rel.relationship})</span>
                           </div>
