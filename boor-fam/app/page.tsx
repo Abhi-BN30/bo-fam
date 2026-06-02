@@ -6,8 +6,8 @@ export default function WelcomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const session = localStorage.getItem('user_session');
-    if (session) {
+    const email = localStorage.getItem('user_email');
+    if (email) {
       router.replace('/profile');
     }
   }, [router]);

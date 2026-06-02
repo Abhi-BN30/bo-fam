@@ -138,7 +138,7 @@ function TreeNodeComponent({ node, onShow, onAdd, onReorder, level = 0, childInd
               }}
               className="flex-1 rounded-md bg-emerald-500 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition"
             >
-              Add
+              Add Child
             </button>
           </div>
         </div>

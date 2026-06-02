@@ -44,13 +44,34 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const stored = localStorage.getItem('user_session');
-    if (!stored) {
-      router.replace('/login');
-      return;
-    }
-    setSession(JSON.parse(stored));
-    setIsSessionLoaded(true);
+    const loadUserSession = async () => {
+      const userEmail = localStorage.getItem('user_email');
+      if (!userEmail) {
+        router.replace('/login');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth', {
+          headers: { 'x-user-email': userEmail },
+        });
+
+        if (!res.ok) {
+          router.replace('/login');
+          return;
+        }
+
+        const userData = await res.json();
+        setSession(userData);
+      } catch (err) {
+        console.error('Failed to load user session:', err);
+        router.replace('/login');
+      } finally {
+        setIsSessionLoaded(true);
+      }
+    };
+
+    loadUserSession();
   }, [router]);
 
   const countAllNodes = (nodes: TreeNode[]): number => {
@@ -343,9 +364,25 @@ export default function Home() {
     setRelationshipResult(result);
   };
 
-  const refreshSession = () => {
-    const stored = localStorage.getItem('user_session');
-    setSession(stored ? JSON.parse(stored) : null);
+  const refreshSession = async () => {
+    const userEmail = localStorage.getItem('user_email');
+    if (!userEmail) {
+      setSession(null);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth', {
+        headers: { 'x-user-email': userEmail },
+      });
+
+      if (res.ok) {
+        const userData = await res.json();
+        setSession(userData);
+      }
+    } catch (err) {
+      console.error('Failed to refresh user session:', err);
+    }
   };
 
   const handleRefresh = async () => {
@@ -360,7 +397,7 @@ export default function Home() {
   }, [isSessionLoaded]);
 
   const logout = () => {
-    localStorage.removeItem('user_session');
+    localStorage.removeItem('user_email');
     setSession(null);
     router.push('/login');
   };

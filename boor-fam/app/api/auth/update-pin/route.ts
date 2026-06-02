@@ -23,20 +23,19 @@ export async function POST(req: Request) {
 
     const sql = neon(process.env.DATABASE_URL!);
 
-    // Update by primary_email as requested.
     const result = await sql`
       UPDATE users
       SET pin = ${newPin}
       WHERE primary_email = ${email}
         AND pin = ${oldPin}
-      RETURNING *
+      RETURNING id, primary_email
     `;
 
     if (result.length === 0) {
       return NextResponse.json({ success: false, message: 'Incorrect old PIN or email not found.' }, { status: 401 });
     }
 
-    return NextResponse.json({ success: true, user: result[0] });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Update PIN error:', error);
     return NextResponse.json({ success: false, message: 'An unexpected error occurred.' }, { status: 500 });

@@ -101,13 +101,8 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
       }
 
       if (mode === 'edit' && finalForm?.id) {
-        const stored = localStorage.getItem('user_session');
-        const currentSession = stored ? JSON.parse(stored) : null;
-        if (currentSession?.id === finalForm.id) {
-          // Exclude PIN when updating session storage
-          const { pin: _, ...sessionUpdate } = finalForm;
-          localStorage.setItem('user_session', JSON.stringify({ ...currentSession, ...sessionUpdate }));
-        }
+        // No longer storing user session in localStorage
+        // User data will be fetched fresh from API on next load
       }
 
       onRefresh();

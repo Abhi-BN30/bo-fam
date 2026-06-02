@@ -9,8 +9,8 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const session = localStorage.getItem('user_session');
-    if (session) {
+    const email = localStorage.getItem('user_email');
+    if (email) {
       router.replace('/profile');
     }
   }, [router]);
@@ -30,7 +30,7 @@ export default function LoginPage() {
 
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem('user_session', JSON.stringify(data.user));
+      localStorage.setItem('user_email', data.email);
       router.push('/profile');
     } else {
       setError(data.message || "Invalid email or PIN.");

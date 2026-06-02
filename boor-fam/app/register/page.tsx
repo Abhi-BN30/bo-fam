@@ -8,6 +8,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     primary_name: '',
     primary_email: '',
+    gender: '',
     spouse_name: '',
     spouse_email: '',
     spouse_contact: '',
@@ -109,7 +110,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className={labelStyle}>Date of Birth *</label>
                   <input type="date" className={inputStyle} value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} required />
@@ -117,6 +118,15 @@ export default function RegisterPage() {
                 <div>
                   <label className={labelStyle}>Primary Email *</label>
                   <input type="email" className={inputStyle} placeholder="Email address" value={form.primary_email} onChange={(e) => setForm({ ...form, primary_email: e.target.value })} required />
+                </div>
+                <div>
+                  <label className={labelStyle}>Gender *</label>
+                  <select className={inputStyle} value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} required>
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Others">Others</option>
+                  </select>
                 </div>
               </div>
               <div className="space-y-1">
