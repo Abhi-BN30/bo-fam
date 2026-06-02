@@ -292,7 +292,7 @@ export default function Home() {
       const aHigh = pathHigh[highDepth - 1];
       const aLow = pathLow[lowDepth - 1];
       const gHigh = (aHigh.gender || '').toLowerCase();
-      const gLow = (pathLow[highDepth - 1].gender || '').toLowerCase();
+      const gLow = (aLow.gender || '').toLowerCase();
       return {
         isParallel: gHigh === gLow && gHigh !== '',
         isCross: gHigh !== gLow && gHigh !== '' && gLow !== '',
@@ -310,10 +310,10 @@ export default function Home() {
           result = (branchAncestor.gender || '').toLowerCase() === 'male' ? "Nanamma" : "Ammamma";
         } else result = "Grandparent";
         
-        if (highDepth === 0 && delta > 2) result = "Great-" + result;
+        if (highDepth === 0 && delta > 2) result = "Muni-" + result;
       } else {
         result = genderize("Manavadu", "Manavaraalu", "Grandchild");
-        if (highDepth === 0 && delta > 2) result = "Great-" + result;
+        if (highDepth === 0 && delta > 2) result = "Muni-" + result;
       }
     } else if (delta === 1) {
       // Parent/Child or Aunt/Uncle/Niece/Nephew logic
@@ -332,11 +332,13 @@ export default function Home() {
           // Logic: "Parallel" sibling's kids are like own kids, "Cross" sibling's kids are Alludu/Kodalu
           const viewerSideGender = (pathHigh[highDepth - 1].gender || '').toLowerCase();
           const isViewerMale = viewerGender === 'male';
+          const targetSideGender = (pathLow[highDepth - 1].gender || '').toLowerCase();
           
           if (isParallel) {
             const prefix = isViewerMale ? "Anna/Thammudu" : "Akka/Chelli";
             result = `${prefix} ${genderize("Koduku", "Kuthuru", "Child")}`;
-          } else {
+          } else if (isCross) {
+            // For cross relationship, use the target's gender to determine alludu/kodalu
             result = genderize("Alludu", "Kodalu", "Niece/Nephew");
           }
         }
@@ -445,8 +447,8 @@ export default function Home() {
             <h1 className={`${greatVibes.className} text-4xl sm:text-5xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none`}>
               The Boorlagadda's
             </h1>
-            <p className={`${cormorantGaramond.className} text-base sm:text-lg uppercase tracking-[0.5em] text-indigo-600 font-black relative ml-6 sm:ml-8 z-0`}> 
-              Family Tree 
+            <p className={`${cormorantGaramond.className} text-base sm:text-lg uppercase tracking-[0.5em] text-indigo-600 font-black text-center`}> 
+              Family 
             </p>
           </div>
 
@@ -455,7 +457,6 @@ export default function Home() {
               <>
                 <ProfileDropdown
                   userName={session.primary_name}
-                  // userEmail={session.spouse_name ? `${session.spouse_name} • ${session.primary_email}` : session.primary_email}
                   userEmail={session.primary_email}
                   onEditProfile={() => {
                     setSelectedUser(session);
@@ -465,11 +466,8 @@ export default function Home() {
                   onEditPin={() => {
                     setIsPinModalOpen(true);
                   }}
+                  onLogout={logout}
                 />
-
-                <button onClick={logout} className="rounded-full bg-rose-500 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-rose-600 whitespace-nowrap">
-                  Logout
-                </button>
               </>
             ) : (
               <button onClick={() => router.push('/login')} className="rounded-full bg-indigo-600 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-indigo-700">

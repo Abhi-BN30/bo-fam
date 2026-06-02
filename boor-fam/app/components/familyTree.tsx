@@ -238,17 +238,31 @@ export default function FamilyTree({ nodes, onShow, onAdd, onReorder, highlightP
 
   return (
     <div className="w-full overflow-auto border border-slate-200 rounded-lg sm:rounded-[1.5rem] bg-white-50 p-8">
-      {/* Reorder Toggle Button */}
+      {/* Reorder Toggle Button - Inside container, scrolls with tree */}
       <div className="flex justify-end mb-6">
         <button
           onClick={() => setIsReorderMode(!isReorderMode)}
-          className={`px-4 py-2 rounded-xl font-bold text-sm transition shadow-sm ${
+          className={`px-4 py-2 rounded-xl font-bold text-sm transition shadow-lg flex items-center gap-2 ${
             isReorderMode 
               ? 'bg-rose-500 hover:bg-rose-600 text-white' 
               : 'bg-indigo-600 hover:bg-indigo-700 text-white'
           }`}
         >
-          {isReorderMode ? 'Finish Reordering' : 'Enable Reordering'}
+          {isReorderMode ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Finish Reordering
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+              </svg>
+              Enable Reordering
+            </>
+          )}
         </button>
       </div>
 

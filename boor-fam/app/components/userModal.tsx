@@ -116,7 +116,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   };
   const handleDelete = async () => {
     if (!form?.id) return;
-    if (!confirm('Remove this person from the family tree? They will stay in the database and can be added back later if needed.')) return;
+    // if (!confirm('Remove this person from the family tree? They will stay in the database and can be added back later if needed.')) return;
 
     try {
       const res = await fetch('/api/users', {
