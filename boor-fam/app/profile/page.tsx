@@ -6,6 +6,7 @@ import FamilyTree, { TreeNode } from '../components/familyTree';
 import AddModal from '../components/addModal';
 import UserModal from '../components/userModal';
 import ChoiceModal from '../components/choiceModal';
+import SearchableUserSelect from '../components/SearchableUserSelect';
 import { calculateGeneration, findAllRelationsAtGeneration, FlattenedNode } from '../lib/utils';
 import ProfileDropdown from '../components/profile/ProfileDropdown';
 import PinModal from '../components/profile/PinModal';
@@ -494,40 +495,45 @@ export default function Home() {
 
           {/* Relationship Finder Section */}
           <div className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/40">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-indigo-600 mb-4">Relationship Finder</h2>
+            <div className="flex items-center gap-3 mb-6">
+              {/* <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg> */}
+              <h2 className="text-sm font-semibold uppercase tracking-widest text-indigo-600">Relationship Finder</h2>
+            </div>
             <div className="flex flex-col sm:flex-row items-end gap-4">
-              <div className="flex-1 w-full">
-                <label className="text-[10px] text-indigo-500 uppercase font-bold mb-1 block">Person 1</label>
-                <select 
-                  className="w-2/3 p-2 text-xs sm:text-sm bg-indigo-50 border border-slate-200 rounded-lg shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  value={finderSelection.p1}
-                  onChange={(e) => setFinderSelection({...finderSelection, p1: e.target.value})}
-                >
-                  <option value="">Select someone...</option>
-                  {allUsers.map(u => <option key={u.id} value={u.id}>{u.primary_name}</option>)}
-                </select>
-              </div>
-              <div className="flex-1 w-full">
-                <label className="text-[10px] text-indigo-500 uppercase font-bold mb-1 block">Person 2</label>
-                <select 
-                  className="w-2/3 p-2 text-xs sm:text-sm bg-indigo-50 border border-slate-200 rounded-lg shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  value={finderSelection.p2}
-                  onChange={(e) => setFinderSelection({...finderSelection, p2: e.target.value})}
-                >
-                  <option value="">Select someone...</option>
-                  {allUsers.map(u => <option key={u.id} value={u.id}>{u.primary_name}</option>)}
-                </select>
-              </div>
+              <SearchableUserSelect
+                users={allUsers}
+                value={finderSelection.p1}
+                onChange={(val) => setFinderSelection({...finderSelection, p1: val})}
+                label="Person 1"
+                icon="👤"
+              />
+              <SearchableUserSelect
+                users={allUsers}
+                value={finderSelection.p2}
+                onChange={(val) => setFinderSelection({...finderSelection, p2: val})}
+                label="Person 2"
+                icon="👤"
+              />
               <button 
                 onClick={handleFindRelationship}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition w-full sm:w-auto"
+                className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
                 Find
               </button>
             </div>
             {relationshipResult && (
-              <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-center">
-                <p className="text-xs text-indigo-400 uppercase font-bold mb-1">Result</p>
+              <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl text-center shadow-sm">
+                <p className="text-xs text-indigo-500 uppercase font-bold mb-2 flex items-center justify-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                  </svg>
+                  Relationship
+                </p>
                 <p className="text-lg font-bold text-indigo-900">{relationshipResult}</p>
               </div>
             )}
@@ -589,7 +595,7 @@ export default function Home() {
               </div>
 
               <div className="flex-none lg:w-32 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center min-w-0">
-                <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Size</p>
+                <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Family Size</p>
                 <p className="mt-1 text-xl sm:text-2xl font-bold text-slate-900">{familyCount}</p>
               </div>
             </div>
