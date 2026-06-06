@@ -12,6 +12,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'PIN must be exactly 4 digits.' }, { status: 400 });
   }
 
+  // Check if a user with this primary_email already exists in the DB
+  if (primary_email) {
+    const existing = await sql`SELECT * FROM users WHERE primary_email = ${primary_email} LIMIT 1`;
+    if (existing.length > 0) {
+      return NextResponse.json(
+        { alreadyExists: true, existingUser: existing[0] },
+        { status: 409 }
+      );
+    }
+  }
+
   const res = await sql`
     INSERT INTO users (primary_name,spouse_name,primary_email,dob,gender,contact,spouse_email,address,city,state,country,spouse_contact,pin) VALUES (${primary_name},${spouse_name},${primary_email},${dob},${gender},${contact},${spouse_email},${address || null},${city || null},${state || null},${country || null},${spouse_contact || null},${parsedPin}) RETURNING id`;
 
@@ -24,7 +35,6 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const { id } = await req.json();
 
-  // 1. Recursively find all descendant IDs in the subtree starting from 'id'
   const subtree = await sql`
     WITH RECURSIVE descendants AS (
       SELECT ${id}::int AS id
@@ -39,9 +49,7 @@ export async function DELETE(req: Request) {
   const allIds = subtree.map((r: any) => r.id);
 
   if (allIds.length > 0) {
-    // 2. Remove all hierarchy links involving these users
     await sql`DELETE FROM family_tree WHERE user_id = ANY(${allIds}::int[]) OR parent_id = ANY(${allIds}::int[])`;
-    // 3. Delete the user records themselves
     await sql`DELETE FROM users WHERE id = ANY(${allIds}::int[])`;
   }
 
@@ -49,7 +57,7 @@ export async function DELETE(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const { id, primary_name, spouse_name, dob, gender, contact, spouse_email,spouse_contact, primary_email, address, city, state, country } = await req.json();
+  const { id, primary_name, spouse_name, dob, gender, contact, spouse_email, spouse_contact, primary_email, address, city, state, country } = await req.json();
 
   if (!id) {
     return NextResponse.json({ error: 'missing id' }, { status: 400 });
