@@ -364,7 +364,12 @@ export default function Home() {
       }
     }
 
-    setRelationshipResult(result);
+    // Format the result with user names and relationship direction
+    const user1Name = getUser(id1)?.primary_name || "User 1";
+    const user2Name = getUser(id2)?.primary_name || "User 2";
+    
+    const formattedResult = `${user2Name}, ${user1Name} ki ${result} avthaaru`;
+    setRelationshipResult(formattedResult);
   };
 
   const refreshSession = async () => {
@@ -527,14 +532,18 @@ export default function Home() {
               </button>
             </div>
             {relationshipResult && (
-              <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl text-center shadow-sm">
-                <p className="text-xs text-indigo-500 uppercase font-bold mb-2 flex items-center justify-center gap-2">
+              <div className="mt-6 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl shadow-sm">
+                <p className="text-xs text-indigo-500 uppercase font-bold mb-4 flex items-center justify-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                   </svg>
                   Relationship
                 </p>
-                <p className="text-lg font-bold text-indigo-900">{relationshipResult}</p>
+                <div className="space-y-2">
+                  <p className="text-center text-base sm:text-lg font-bold text-indigo-900">
+                    {relationshipResult}
+                  </p>
+                </div>
               </div>
             )}
           </div>
