@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     }
 
     const sql = neon(process.env.DATABASE_URL!);
-    const result = await sql`SELECT id, primary_name, primary_email, spouse_name, spouse_email, dob, gender, contact, spouse_contact, address, city, state, country FROM users WHERE primary_email = ${email} OR spouse_email = ${email}`;
+    const result = await sql`SELECT id, primary_name, primary_email, spouse_name, spouse_email, dob::text AS dob, gender, contact, spouse_contact, address, city, state, country FROM users WHERE primary_email = ${email} OR spouse_email = ${email}`;
     
     if (result.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

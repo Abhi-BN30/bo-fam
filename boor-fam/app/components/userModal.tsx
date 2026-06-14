@@ -8,6 +8,7 @@ interface UserModalProps {
   mode: 'add' | 'edit' | 'view';
   initialData?: Record<string, any>;
   onEditRequested?: () => void;
+  currentUserEmail?: string;
 }
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -18,7 +19,7 @@ function formatDate(dateStr: string | null | undefined): string {
   } catch { return dateStr; }
 }
 
-export default function UserModal({ isOpen, onClose, onRefresh, mode, initialData, onEditRequested }: UserModalProps) {
+export default function UserModal({ isOpen, onClose, onRefresh, mode, initialData, onEditRequested, currentUserEmail }: UserModalProps) {
   const [form, setForm] = useState<Record<string, any>>(initialData || {});
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -26,10 +27,16 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   const [cities, setCities] = useState<string[]>([]);
   const [showCustomCityInput, setShowCustomCityInput] = useState(false);
   const [customCityValue, setCustomCityValue] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePin, setDeletePin] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const normalizeDob = (value: string | undefined) => {
-    if (!value) return '';
-    return value.includes('T') ? value.split('T')[0] : value;
+  // Replace normalizeDob everywhere it appears:
+  const normalizeToInputDate = (raw: string | undefined | null): string => {
+    if (!raw) return '';
+    const m = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
   };
 
   const normalizeDate = (value: string | undefined) => {
@@ -41,10 +48,14 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
     const data = initialData || {};
     setForm({
       ...data,
-      dob: normalizeDob(data.dob),
-      anniversary: normalizeDate(data.anniversary),
+      dob: normalizeToInputDate(data.dob),
+      anniversary: normalizeToInputDate(data.anniversary),
     });
     setError('');
+    setShowDeleteConfirm(false);
+    setDeletePin('');
+    setDeleteError('');
+    setIsDeleting(false);
     if (data.country) {
       const fetchedStates = getStatesByCountry(data.country);
       const fetchedCities = getCitiesByCountry(data.country);
@@ -95,13 +106,54 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
     } finally { setIsSaving(false); }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    if (!form?.id) return;
+    setDeleteError('');
+    setDeletePin('');
+    setShowDeleteConfirm(true);
+  };
+
+  const performDelete = async () => {
     if (!form?.id) return;
     try {
       const res = await fetch('/api/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: form.id }) });
-      if (!res.ok) { const data = await res.json(); setError(data?.error || 'Unable to delete user.'); return; }
+      if (!res.ok) { const data = await res.json(); setDeleteError(data?.error || 'Unable to delete user.'); return; }
       onRefresh(); onClose();
-    } catch { setError('Unable to delete user.'); }
+    } catch { setDeleteError('Unable to delete user.'); }
+  };
+
+  const handleConfirmDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDeleteError('');
+
+    if (deletePin.length !== 4) {
+      setDeleteError('PIN must be exactly 4 digits.');
+      return;
+    }
+
+    if (!currentUserEmail) {
+      setDeleteError('Unable to verify your identity. Please log in again.');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const verifyRes = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentUserEmail, pin: parseInt(deletePin, 10) }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        setDeleteError(verifyData?.message || 'Incorrect PIN. Please try again.');
+        return;
+      }
+      await performDelete();
+    } catch {
+      setDeleteError('Unable to verify PIN. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -114,6 +166,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   const labelStyle = "text-xs font-bold text-slate-500 ml-1";
 
   return (
+    <>
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
       <div className="relative bg-white p-6 sm:p-8 rounded-3xl w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-auto border border-slate-100 animate-in fade-in zoom-in duration-200">
         <button type="button" onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors z-10">
@@ -289,19 +342,83 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
             {isView ? (
               <>
                 <button type="button" onClick={e => { e.preventDefault(); e.stopPropagation(); onEditRequested?.(); }} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95">Edit Profile</button>
-                <button type="button" onClick={handleDelete} className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all active:scale-95">Delete</button>
+                <button type="button" onClick={handleDeleteClick} className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all active:scale-95">Delete</button>
               </>
             ) : (
               <>
                 <button type="submit" disabled={isSaving} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50">
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
-                <button type="button" onClick={handleDelete} className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all active:scale-95">Delete</button>
+                <button type="button" onClick={handleDeleteClick} className="bg-rose-50 text-rose-600 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all active:scale-95">Delete</button>
               </>
             )}
           </div>
         </form>
       </div>
     </div>
+
+    {showDeleteConfirm && (
+      <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+        <div className="relative bg-white p-6 sm:p-8 rounded-3xl w-full sm:max-w-sm shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(false)}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors z-10"
+            title="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+
+          <div className="flex flex-col items-center mb-4 text-center">
+            <div className="h-12 w-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-3 text-rose-600">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zM12 15.75h.008v.008H12v-.008z" /></svg>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">Delete {form.primary_name || 'this member'}?</h2>
+            <p className="text-sm text-slate-500 mt-2">
+              This will permanently remove {form.primary_name || 'this person'}
+              {hasSpouse ? <> and <span className="font-semibold text-slate-700">{form.spouse_name}</span></> : ''}, along with everyone listed under them in the tree. This cannot be undone.
+            </p>
+          </div>
+
+          {deleteError && (
+            <p className="text-rose-600 text-sm mb-4 p-3 bg-rose-50 rounded-xl border border-rose-100 font-medium text-center">{deleteError}</p>
+          )}
+
+          <form onSubmit={handleConfirmDelete} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 ml-1">Enter your PIN to confirm *</label>
+              <input
+                inputMode="numeric"
+                maxLength={4}
+                autoFocus
+                className="w-full border border-slate-200 p-3 rounded-2xl text-base text-center tracking-[0.6em] focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all outline-none bg-slate-50/50"
+                placeholder="••••"
+                value={deletePin}
+                onChange={(e) => setDeletePin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                required
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 bg-slate-100 text-slate-700 px-4 py-3 rounded-2xl text-sm font-bold hover:bg-slate-200 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isDeleting}
+                className="flex-1 bg-rose-600 text-white px-4 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

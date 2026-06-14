@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   }
 
   if (primary_email) {
-    const existing = await sql`SELECT * FROM users WHERE primary_email = ${primary_email} LIMIT 1`;
+    const existing = await sql`SELECT *, dob::text AS dob, anniversary::text AS anniversary FROM users WHERE primary_email = ${primary_email} LIMIT 1`;
     if (existing.length > 0) {
       return NextResponse.json({ alreadyExists: true, existingUser: existing[0] }, { status: 409 });
     }
@@ -94,7 +94,7 @@ export async function PUT(req: Request) {
       deceased_spouse  = ${!!deceased_spouse},
       anniversary      = ${anniversary || null}
     WHERE id = ${id}
-    RETURNING *`;
+    RETURNING *, dob::text AS dob, anniversary::text AS anniversary`;
 
   return NextResponse.json(result[0] || null);
 }
@@ -103,6 +103,6 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'missing id' }, { status: 400 });
-  const res = await sql`SELECT * FROM users WHERE id = ${id}`;
+  const res = await sql`SELECT *, dob::text AS dob, anniversary::text AS anniversary FROM users WHERE id = ${id}`;
   return NextResponse.json(res[0] || null);
 }

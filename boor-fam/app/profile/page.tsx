@@ -11,6 +11,7 @@ import { calculateGeneration, findAllRelationsAtGeneration, FlattenedNode } from
 import ProfileDropdown from '../components/profile/ProfileDropdown';
 import PinModal from '../components/profile/PinModal';
 import FamilyTambola from '../components/FamilyTambola';
+import MemberSearch from '../components/MemberSearch';
 
 const greatVibes = Great_Vibes({
   subsets: ['latin'],
@@ -21,6 +22,51 @@ const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
   weight: '400',
 });
+
+function MonthlyEventsCard({ birthdaysThisMonth, anniversariesThisMonth, monthName }: {
+  birthdaysThisMonth: any[];
+  anniversariesThisMonth: any[];
+  monthName: string;
+}) {
+  const [activeTab, setActiveTab] = useState<'birthdays' | 'anniversaries'>('birthdays');
+  return (
+    <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 min-w-0">
+      <div className="flex gap-1 mb-3 bg-slate-100 rounded-xl p-1">
+        <button
+          onClick={() => setActiveTab('birthdays')}
+          className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition ${activeTab === 'birthdays' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          🎂 Birthdays
+        </button>
+        <button
+          onClick={() => setActiveTab('anniversaries')}
+          className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition ${activeTab === 'anniversaries' ? 'bg-white text-indigo-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          💍 Anniversaries
+        </button>
+      </div>
+      {activeTab === 'birthdays' ? (
+        <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto pr-1">
+          {birthdaysThisMonth.length > 0 ? birthdaysThisMonth.map((u: any) => (
+            <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-indigo-50 rounded border border-indigo-100">
+              <span className="font-medium text-slate-700">{u.primary_name}</span>
+              <span className="text-indigo-500 font-bold">{new Date(u.dob).getUTCDate()} {monthName.substring(0,3)}</span>
+            </div>
+          )) : <p className="text-xs text-slate-400 italic">No birthdays this month</p>}
+        </div>
+      ) : (
+        <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto pr-1">
+          {anniversariesThisMonth.length > 0 ? anniversariesThisMonth.map((u: any) => (
+            <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-indigo-50 rounded border border-indigo-100">
+              <span className="font-medium text-slate-700">{u.primary_name}{u.spouse_name ? ` & ${u.spouse_name}` : ''}</span>
+              <span className="text-indigo-500 font-bold">{new Date(u.anniversary).getUTCDate()} {monthName.substring(0,3)}</span>
+            </div>
+          )) : <p className="text-xs text-slate-400 italic">No anniversaries this month</p>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 
 export default function Home() {
@@ -446,6 +492,16 @@ export default function Home() {
     return dayA - dayB;
   });
 
+  const anniversariesThisMonth = allUsers.filter((u: any) => {
+  if (!u.anniversary) return false;
+  const raw = typeof u.anniversary === 'string' ? u.anniversary : null;
+  if (raw) {
+    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return Number(m[2]) === currentMonth;
+  }
+  return new Date(u.anniversary).getMonth() + 1 === currentMonth;
+}).sort((a: any, b: any) => new Date(a.anniversary).getUTCDate() - new Date(b.anniversary).getUTCDate());
+
   return (
     <div className="min-h-screen w-screen bg-slate-50 text-slate-900">
       <header className="fixed inset-x-0 top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
@@ -588,7 +644,7 @@ export default function Home() {
               )}
 
               {/* Birthday Alerts Card */}
-              <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 min-w-0">
+              {/* <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 min-w-0">
                 <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <span>🎂</span> Birthdays in {monthName}
                 </p>
@@ -602,7 +658,58 @@ export default function Home() {
                     <p className="text-xs text-slate-400 italic">No birthdays this month</p>
                   )}
                 </div>
-              </div>
+              </div> */}
+
+              {/* Birthdays + Anniversaries tab card */}
+              {/* <div className="flex-1 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 min-w-0">
+                {(() => {
+                  const [activeTab, setActiveTab] = useState<'birthdays' | 'anniversaries'>('birthdays');
+                  return (
+                    <>
+                      <div className="flex gap-1 mb-3 bg-slate-100 rounded-xl p-1">
+                        <button
+                          onClick={() => setActiveTab('birthdays')}
+                          className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition ${activeTab === 'birthdays' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                          🎂 Birthdays
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('anniversaries')}
+                          className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition ${activeTab === 'anniversaries' ? 'bg-white text-rose-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                          💍 Anniversaries
+                        </button>
+                      </div>
+
+                      {activeTab === 'birthdays' ? (
+                        <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto pr-1">
+                          {birthdaysThisMonth.length > 0 ? birthdaysThisMonth.map((u: any) => (
+                            <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-indigo-50 rounded border border-indigo-100">
+                              <span className="font-medium text-slate-700">{u.primary_name}</span>
+                              <span className="text-indigo-500 font-bold">{new Date(u.dob).getUTCDate()} {monthName.substring(0,3)}</span>
+                            </div>
+                          )) : <p className="text-xs text-slate-400 italic">No birthdays this month</p>}
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto pr-1">
+                          {anniversariesThisMonth.length > 0 ? anniversariesThisMonth.map((u: any) => (
+                            <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-rose-50 rounded border border-rose-100">
+                              <span className="font-medium text-slate-700">{u.primary_name}{u.spouse_name ? ` & ${u.spouse_name}` : ''}</span>
+                              <span className="text-rose-500 font-bold">{new Date(u.anniversary).getUTCDate()} {monthName.substring(0,3)}</span>
+                            </div>
+                          )) : <p className="text-xs text-slate-400 italic">No anniversaries this month</p>}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div> */}
+
+              <MonthlyEventsCard
+                birthdaysThisMonth={birthdaysThisMonth}
+                anniversariesThisMonth={anniversariesThisMonth}
+                monthName={monthName}
+              />
 
               <div className="flex-none lg:w-32 rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-5 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center min-w-0">
                 <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Family Size</p>
@@ -613,6 +720,10 @@ export default function Home() {
 
           {/* <FamilyTambola allUsers={allUsers} /> */}
         </section>
+
+        {/* Member Search */}
+        <MemberSearch allUsers={allUsers} session={session} />
+
 
         <section className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40">
           <div className="max-w-full overflow-x-auto">
@@ -650,6 +761,7 @@ export default function Home() {
           mode={userModalMode}
           initialData={selectedUser}
           onEditRequested={() => setUserModalMode('edit')}
+          currentUserEmail={session?.primary_email}
         />
       )}
 

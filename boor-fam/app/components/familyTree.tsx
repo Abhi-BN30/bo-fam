@@ -141,13 +141,13 @@ function TreeNodeComponent({
             </div>
           )}
 
-          {/* Contact */}
+          {/* Contact
           {(node.contact || node.primary_email) && (
             <div className="mb-3 text-xs text-slate-600 space-y-0.5 pb-3 border-b border-slate-100">
               {node.contact && <div className="truncate"><span className="font-semibold">Ph:</span> {node.contact}</div>}
               {node.primary_email && <div className="truncate"><span className="font-semibold">Email:</span> {node.primary_email}</div>}
             </div>
-          )}
+          )} */}
 
           {/* Actions */}
           <div className="flex gap-2">

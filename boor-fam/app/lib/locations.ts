@@ -83,7 +83,7 @@ export const getStatesByCountry = (country: string): string[] => {
 // Common major cities by country
 export const CITIES_BY_COUNTRY: Record<string, string[]> = {
   'India': [
-    'Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Chennai', 'Pune',
+    'Bangalore', 'Mumbai', 'Delhi', 'Hyderabad','Eluru', 'Chennai', 'Pune',
     'Kolkata', 'Ahmedabad', 'Surat', 'Jaipur', 'Lucknow', 'Indore',
     'Chandigarh', 'Bhopal', 'Coimbatore', 'Visakhapatnam'
   ],
