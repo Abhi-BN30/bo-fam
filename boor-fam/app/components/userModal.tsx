@@ -268,7 +268,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <span>—</span><span>{form.primary_name} is alive</span>
+                        <span>—</span>
                       </div>
                     )}
                     {hasSpouse && (
@@ -278,7 +278,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 text-xs text-slate-400">
-                          <span>—</span><span>{form.spouse_name} is alive</span>
+                          <span>—</span>
                         </div>
                       )
                     )}
