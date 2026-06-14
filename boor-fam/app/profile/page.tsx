@@ -10,6 +10,7 @@ import SearchableUserSelect from '../components/SearchableUserSelect';
 import { calculateGeneration, findAllRelationsAtGeneration, FlattenedNode } from '../lib/utils';
 import ProfileDropdown from '../components/profile/ProfileDropdown';
 import PinModal from '../components/profile/PinModal';
+import FamilyTambola from '../components/FamilyTambola';
 
 const greatVibes = Great_Vibes({
   subsets: ['latin'],
@@ -609,6 +610,8 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* <FamilyTambola allUsers={allUsers} /> */}
         </section>
 
         <section className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40">
