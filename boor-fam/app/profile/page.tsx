@@ -40,7 +40,7 @@ function MonthlyEventsCard({ birthdaysThisMonth, anniversariesThisMonth, monthNa
         </button>
         <button
           onClick={() => setActiveTab('anniversaries')}
-          className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition ${activeTab === 'anniversaries' ? 'bg-white text-indigo-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+          className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg transition ${activeTab === 'anniversaries' ? 'bg-white text-rose-500 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
         >
           💍 Anniversaries
         </button>
@@ -57,9 +57,9 @@ function MonthlyEventsCard({ birthdaysThisMonth, anniversariesThisMonth, monthNa
       ) : (
         <div className="space-y-2 max-h-24 sm:max-h-32 overflow-y-auto pr-1">
           {anniversariesThisMonth.length > 0 ? anniversariesThisMonth.map((u: any) => (
-            <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-indigo-50 rounded border border-indigo-100">
+            <div key={u.id} className="flex justify-between items-center text-xs p-2 bg-rose-50 rounded border border-rose-100">
               <span className="font-medium text-slate-700">{u.primary_name}{u.spouse_name ? ` & ${u.spouse_name}` : ''}</span>
-              <span className="text-indigo-500 font-bold">{new Date(u.anniversary).getUTCDate()} {monthName.substring(0,3)}</span>
+              <span className="text-rose-500 font-bold">{new Date(u.anniversary).getUTCDate()} {monthName.substring(0,3)}</span>
             </div>
           )) : <p className="text-xs text-slate-400 italic">No anniversaries this month</p>}
         </div>
@@ -505,17 +505,17 @@ export default function Home() {
   return (
     <div className="min-h-screen w-screen bg-slate-50 text-slate-900">
       <header className="fixed inset-x-0 top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-5 flex-col sm:flex-row">
-          <div className="relative">
-            <h1 className={`${greatVibes.className} text-4xl sm:text-5xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none`}>
+        <div className="mx-auto flex flex-row items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-5 max-w-7xl">
+          <div className="relative min-w-0 flex-1 sm:flex-none">
+            <h1 className={`${greatVibes.className} text-2xl sm:text-5xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none truncate`}>
               The Boorlagadda's
             </h1>
-            <p className={`${cormorantGaramond.className} text-base sm:text-lg uppercase tracking-[0.5em] text-indigo-600 font-black text-center`}> 
+            <p className={`${cormorantGaramond.className} text-[10px] sm:text-lg uppercase tracking-[0.2em] sm:tracking-[0.5em] text-indigo-600 font-black text-center`}> 
               Family 
             </p>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-slate-200 bg-white px-3 sm:px-4 py-2 shadow-sm text-xs sm:text-sm flex-wrap justify-end sm:justify-start">
+          <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-slate-200 bg-white px-2 sm:px-4 py-2 shadow-sm text-xs sm:text-sm flex-shrink-0 flex-nowrap justify-end sm:justify-start">
             {session ? (
               <>
                 <ProfileDropdown
@@ -761,7 +761,6 @@ export default function Home() {
           mode={userModalMode}
           initialData={selectedUser}
           onEditRequested={() => setUserModalMode('edit')}
-          currentUserEmail={session?.primary_email}
         />
       )}
 

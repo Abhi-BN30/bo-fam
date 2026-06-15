@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
 
+// Master PIN required to confirm deleting a user from the tree.
+// This is intentionally independent of any individual user's login PIN
+// so that deletion access can be restricted/shared separately.
+const DELETE_CONFIRMATION_PIN = '4321';
+
 interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -8,7 +13,6 @@ interface UserModalProps {
   mode: 'add' | 'edit' | 'view';
   initialData?: Record<string, any>;
   onEditRequested?: () => void;
-  currentUserEmail?: string;
 }
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -19,7 +23,7 @@ function formatDate(dateStr: string | null | undefined): string {
   } catch { return dateStr; }
 }
 
-export default function UserModal({ isOpen, onClose, onRefresh, mode, initialData, onEditRequested, currentUserEmail }: UserModalProps) {
+export default function UserModal({ isOpen, onClose, onRefresh, mode, initialData, onEditRequested }: UserModalProps) {
   const [form, setForm] = useState<Record<string, any>>(initialData || {});
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -131,26 +135,14 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
       return;
     }
 
-    if (!currentUserEmail) {
-      setDeleteError('Unable to verify your identity. Please log in again.');
+    if (deletePin !== DELETE_CONFIRMATION_PIN) {
+      setDeleteError('Incorrect PIN. Please try again.');
       return;
     }
 
     setIsDeleting(true);
     try {
-      const verifyRes = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentUserEmail, pin: parseInt(deletePin, 10) }),
-      });
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok || !verifyData.success) {
-        setDeleteError(verifyData?.message || 'Incorrect PIN. Please try again.');
-        return;
-      }
       await performDelete();
-    } catch {
-      setDeleteError('Unable to verify PIN. Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -376,7 +368,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
             <h2 className="text-xl font-bold text-slate-900">Delete {form.primary_name || 'this member'}?</h2>
             <p className="text-sm text-slate-500 mt-2">
               This will permanently remove {form.primary_name || 'this person'}
-              {hasSpouse ? <> and <span className="font-semibold text-slate-700">{form.spouse_name}</span></> : ''}, along with everyone listed under them in the tree. This cannot be undone.
+              {hasSpouse ? <> and <span className="font-semibold text-slate-700">{form.spouse_name}</span></> : ''}, along with everyone listed under them in the tree. This cannot be undone. Only Admin can perform this action.
             </p>
           </div>
 
@@ -386,7 +378,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
 
           <form onSubmit={handleConfirmDelete} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-500 ml-1">Enter your PIN to confirm *</label>
+              <label className="text-xs font-bold text-slate-500 ml-1">Enter deletion PIN to confirm *</label>
               <input
                 inputMode="numeric"
                 maxLength={4}

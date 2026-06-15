@@ -33,23 +33,23 @@ export default function ProfileDropdown({
     <div ref={ref} className="relative">
       <button
         type="button"
-        className="text-left cursor-pointer flex items-center gap-3 hover:opacity-80 transition"
+        className="text-left cursor-pointer flex items-center gap-2 sm:gap-3 hover:opacity-80 transition"
         onClick={() => setOpen(o => !o)}
       >
-        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+        <div className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 rounded-full bg-indigo-100 flex items-center justify-center text-xs sm:text-sm font-semibold text-indigo-700">
           {/* <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg> */}
           {userName.split(' ').map(n => n[0]).join('').slice(0,2)}
         </div>
-        <div className="text-xs sm:text-sm">
+        <div className="hidden sm:block text-xs sm:text-sm">
           <div className="font-semibold text-slate-900">{userName}</div>
           <div className="text-xs text-slate-500">{userEmail}</div>
         </div>
         {/* Modern arrow heads only */}
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          className={`h-5 w-5 text-slate-400 transition-transform ml-auto ${open ? 'rotate-180' : ''}`} 
+          className={`h-5 w-5 text-slate-400 transition-transform sm:ml-auto ${open ? 'rotate-180' : ''}`} 
           fill="none" 
           viewBox="0 0 24 24" 
           stroke="currentColor"
@@ -61,6 +61,12 @@ export default function ProfileDropdown({
 
       {open && (
         <div className="absolute right-0 top-full mt-3 w-64 rounded-2xl border border-slate-200 bg-white shadow-2xl p-1 z-50 animate-in fade-in slide-in-from-top-2">
+          {/* Name/email shown here on mobile since the trigger only shows the icon */}
+          <div className="sm:hidden px-4 py-3 mb-1 border-b border-slate-100">
+            <div className="text-sm font-semibold text-slate-900 truncate">{userName}</div>
+            <div className="text-xs text-slate-500 truncate">{userEmail}</div>
+          </div>
+
           <button
             type="button"
             onClick={() => {
@@ -118,4 +124,3 @@ export default function ProfileDropdown({
     </div>
   );
 }
-
