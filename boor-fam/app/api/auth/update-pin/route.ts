@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { log } from '@/app/lib/logger';
 
 export async function POST(req: Request) {
   try {
@@ -32,8 +33,19 @@ export async function POST(req: Request) {
     `;
 
     if (result.length === 0) {
+      await log({
+        action:       'PIN_UPDATE_FAILED',
+        performed_by: email,
+        details:      'Incorrect old PIN or email not found',
+      });
       return NextResponse.json({ success: false, message: 'Incorrect old PIN or email not found.' }, { status: 401 });
     }
+
+    await log({
+      action:       'PIN_UPDATED',
+      performed_by: email,
+      details:      'PIN changed successfully',
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -41,4 +53,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: 'An unexpected error occurred.' }, { status: 500 });
   }
 }
-

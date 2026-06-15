@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { log } from '@/app/lib/logger';
 
 export async function POST(req: Request) {
   try {
@@ -9,14 +10,30 @@ export async function POST(req: Request) {
     const result = await sql`SELECT * FROM users WHERE primary_email = ${email} OR spouse_email = ${email}`;
     
     if (result.length === 0) {
+      await log({
+        action:       'USER_LOGIN_FAILED',
+        performed_by: email,
+        details:      'Email not found in records',
+      });
       return NextResponse.json({ success: false, message: "Email not found in our records." }, { status: 401 });
     }
 
     const user = result[0];
 
     if (user.pin !== pin) {
+      await log({
+        action:       'USER_LOGIN_FAILED',
+        performed_by: email,
+        details:      'Incorrect PIN',
+      });
       return NextResponse.json({ success: false, message: "Incorrect PIN. Please try again." }, { status: 401 });
     }
+
+    await log({
+      action:       'USER_LOGIN',
+      performed_by: user.primary_email,
+      details:      'Successful login',
+    });
 
     return NextResponse.json({ success: true, email: user.primary_email, id: user.id });
   } catch (error) {

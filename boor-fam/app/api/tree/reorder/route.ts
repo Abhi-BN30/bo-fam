@@ -1,7 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { log } from '@/app/lib/logger';
 
 export async function POST(req: Request) {
+  const performedBy = req.headers.get('x-user-email') || 'anonymous';
   const { updates } = await req.json();
   const sql = neon(process.env.DATABASE_URL!);
 
@@ -10,10 +12,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Update all orders in a transaction-like manner
     for (const { user_id, order } of updates) {
       await sql`UPDATE family_tree SET "order" = ${order} WHERE user_id = ${user_id}`;
     }
+
+    await log({
+      action:       'TREE_NODE_REORDERED',
+      performed_by: performedBy,
+      details:      `Reordered ${updates.length} node(s)`,
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {

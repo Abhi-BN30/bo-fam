@@ -1,9 +1,13 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { log } from '@/app/lib/logger';
 
 const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(req: Request) {
+  // The actor performing the registration (may be an admin or the new user themselves)
+  const performedBy = req.headers.get('x-user-email') || 'anonymous';
+
   const {
     primary_name, spouse_name, primary_email, dob, gender, parent_id,
     contact, spouse_email, address, city, state, country, spouse_contact, pin,
@@ -39,11 +43,26 @@ export async function POST(req: Request) {
   if (parent_id) {
     await sql`INSERT INTO family_tree (user_id, parent_id) VALUES (${res[0].id}, ${parent_id})`;
   }
+
+  await log({
+    action:       'USER_REGISTERED',
+    performed_by: performedBy,
+    target_user:  primary_email || primary_name,
+    details:      `New member registered: ${primary_name}${spouse_name ? ` & ${spouse_name}` : ''}`,
+  });
+
   return NextResponse.json({ id: res[0].id });
 }
 
 export async function DELETE(req: Request) {
+  const performedBy = req.headers.get('x-user-email') || 'anonymous';
   const { id } = await req.json();
+
+  // Capture the user's name before deleting for the log entry
+  const userRecord = await sql`SELECT primary_name, primary_email FROM users WHERE id = ${id}`;
+  const targetLabel = userRecord[0]
+    ? `${userRecord[0].primary_name} (${userRecord[0].primary_email})`
+    : `id:${id}`;
 
   const subtree = await sql`
     WITH RECURSIVE descendants AS (
@@ -63,10 +82,19 @@ export async function DELETE(req: Request) {
     await sql`DELETE FROM users WHERE id = ANY(${allIds}::int[])`;
   }
 
+  await log({
+    action:       'USER_DELETED',
+    performed_by: performedBy,
+    target_user:  targetLabel,
+    details:      `Deleted user and ${allIds.length - 1} descendant(s)`,
+  });
+
   return NextResponse.json({ success: true });
 }
 
 export async function PUT(req: Request) {
+  const performedBy = req.headers.get('x-user-email') || 'anonymous';
+
   const {
     id, primary_name, spouse_name, dob, gender, contact, spouse_email,
     spouse_contact, primary_email, address, city, state, country,
@@ -95,6 +123,13 @@ export async function PUT(req: Request) {
       anniversary      = ${anniversary || null}
     WHERE id = ${id}
     RETURNING *, dob::text AS dob, anniversary::text AS anniversary`;
+
+  await log({
+    action:       'USER_UPDATED',
+    performed_by: performedBy,
+    target_user:  primary_email || primary_name,
+    details:      `Updated profile for: ${primary_name}${spouse_name ? ` & ${spouse_name}` : ''}`,
+  });
 
   return NextResponse.json(result[0] || null);
 }
