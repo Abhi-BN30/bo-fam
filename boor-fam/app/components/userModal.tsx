@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
+import { authFetch } from '../lib/authFetch';
 
 // Master PIN required to confirm deleting a user from the tree.
 // This is intentionally independent of any individual user's login PIN
@@ -92,7 +93,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
         finalForm.city = customCityValue.trim();
       }
       const method = mode === 'edit' ? 'PUT' : 'POST';
-      const res = await fetch('/api/users', {
+      const res = await authFetch('/api/users', {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,7 +121,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   const performDelete = async () => {
     if (!form?.id) return;
     try {
-      const res = await fetch('/api/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: form.id }) });
+      const res = await authFetch('/api/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: form.id }) });
       if (!res.ok) { const data = await res.json(); setDeleteError(data?.error || 'Unable to delete user.'); return; }
       onRefresh(); onClose();
     } catch { setDeleteError('Unable to delete user.'); }

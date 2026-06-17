@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
+import { authFetch } from '../lib/authFetch';
 
 interface AddModalProps {
   onClose: () => void;
@@ -103,7 +104,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
     if (!existingUser) return;
     setIsSubmitting(true); setError('');
     try {
-      const res = await fetch('/api/tree/add-to-tree', {
+      const res = await authFetch('/api/tree/add-to-tree', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: existingUser.id, parent_id: parentId }),
@@ -132,7 +133,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
 
     try {
       if (mode === 'add-self' && currentUser) {
-        const res = await fetch('/api/tree/add-to-tree', {
+        const res = await authFetch('/api/tree/add-to-tree', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: currentUser.id, parent_id: parentId }),
@@ -140,7 +141,7 @@ export default function AddModal({ onClose, onRefresh, parentId = null, mode = '
         if (!res.ok) throw new Error(await res.text() || 'Failed to add to tree');
       } else {
         const pinDigits = finalForm.pin?.toString().replace(/\D/g, '') ?? '';
-        const res = await fetch('/api/users', {
+        const res = await authFetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

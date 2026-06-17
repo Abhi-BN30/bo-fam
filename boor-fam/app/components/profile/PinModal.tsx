@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { authFetch } from '../../lib/authFetch';
 
 export default function PinModal({
   isOpen,
@@ -47,7 +48,7 @@ export default function PinModal({
 
     setIsSaving(true);
     try {
-      const res = await fetch('/api/auth/update-pin', {
+      const res = await authFetch('/api/auth/update-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

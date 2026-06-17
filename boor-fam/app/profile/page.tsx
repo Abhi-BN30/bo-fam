@@ -12,6 +12,7 @@ import ProfileDropdown from '../components/profile/ProfileDropdown';
 import PinModal from '../components/profile/PinModal';
 import FamilyTambola from '../components/FamilyTambola';
 import MemberSearch from '../components/MemberSearch';
+import { authFetch } from '../lib/authFetch';
 
 const greatVibes = Great_Vibes({
   subsets: ['latin'],
@@ -263,7 +264,7 @@ export default function Home() {
 
   const handleReorder = async (parentId: number, updates: Array<{ user_id: number; order: number }>) => {
     try {
-      const res = await fetch('/api/tree/reorder', {
+      const res = await authFetch('/api/tree/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ updates }),

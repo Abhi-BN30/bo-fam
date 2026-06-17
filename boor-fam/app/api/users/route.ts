@@ -5,8 +5,10 @@ import { log } from '@/app/lib/logger';
 const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(req: Request) {
-  // The actor performing the registration (may be an admin or the new user themselves)
-  const performedBy = req.headers.get('x-user-email') || 'anonymous';
+  // No one is logged in yet during self-registration, so there's no
+  // x-user-email header to read. Fall back to a clear label rather than
+  // the generic "anonymous" used elsewhere for genuinely unknown actors.
+  const performedBy = req.headers.get('x-user-email') || 'self-registration';
 
   const {
     primary_name, spouse_name, primary_email, dob, gender, parent_id,
