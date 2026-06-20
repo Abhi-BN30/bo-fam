@@ -5,7 +5,7 @@ import { authFetch } from '../lib/authFetch';
 // Master PIN required to confirm deleting a user from the tree.
 // This is intentionally independent of any individual user's login PIN
 // so that deletion access can be restricted/shared separately.
-const DELETE_CONFIRMATION_PIN = '4321';
+const DELETE_CONFIRMATION_PIN = '5916';
 
 interface UserModalProps {
   isOpen: boolean;

@@ -508,7 +508,7 @@ export default function Home() {
       <header className="fixed inset-x-0 top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex flex-row items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-5 max-w-7xl">
           <div className="relative min-w-0 flex-1 sm:flex-none">
-            <h1 className={`${greatVibes.className} text-2xl sm:text-5xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none truncate`}>
+            <h1 className={`${greatVibes.className} text-3xl sm:text-5xl font-medium text-slate-900 relative z-10 drop-shadow-sm select-none`}>
               The Boorlagadda's
             </h1>
             <p className={`${cormorantGaramond.className} text-[10px] sm:text-lg uppercase tracking-[0.2em] sm:tracking-[0.5em] text-indigo-600 font-black text-center`}> 

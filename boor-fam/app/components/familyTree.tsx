@@ -65,7 +65,7 @@ function TreeNodeComponent({
   level = 0, childIndex = 0, totalSiblings = 1,
   isReorderMode, highlightPathIds, onMove,
 }: TreeNodeProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(level < 1);
 
   const hasChildren = node.children && node.children.length > 0;
   const indentClass = "ml-[300px] sm:ml-[350px]";
