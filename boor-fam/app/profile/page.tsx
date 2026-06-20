@@ -773,6 +773,12 @@ export default function Home() {
           onSuccess={() => {}}
         />
       )}
+
+      <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex items-center justify-center px-3 sm:px-6 py-2 sm:py-3 max-w-7xl text-[11px] sm:text-sm text-slate-500">
+          An initiative by Abhilash B N V S
+        </div>
+      </footer>
     </div>
   );
 }
