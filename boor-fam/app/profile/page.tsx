@@ -90,6 +90,7 @@ export default function Home() {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [finderSelection, setFinderSelection] = useState<{ p1: string; p2: string }>({ p1: '', p2: '' });
   const [relationshipResult, setRelationshipResult] = useState<string | null>(null);
+  const [navigateToUserId, setNavigateToUserId] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -350,19 +351,22 @@ export default function Home() {
       };
     };
 
+    // Helper: build "Muni-" prefix string for (delta - 2) extra generations beyond grandparent/grandchild
+    const muniPrefix = (extraGens: number) => 'Muni-'.repeat(Math.max(0, extraGens));
+
     if (delta >= 2) {
-      // Grandparent/Grandchild logic (Simplified to standard terms for grand-relatives)
+      // Grandparent/Grandchild logic
       if (isTargetHigher) {
         if (targetGender === 'male') result = "Thathayya";
         else if (targetGender === 'female') {
-          const branchAncestor = pathLow[lowDepth - 1]; // Lineage start at LCA
+          const branchAncestor = pathLow[lowDepth - 1];
           result = (branchAncestor.gender || '').toLowerCase() === 'male' ? "Nanamma" : "Ammamma";
         } else result = "Grandparent";
         
-        if (highDepth === 0 && delta > 2) result = "Muni-" + result;
+        if (highDepth === 0 && delta > 2) result = muniPrefix(delta - 2) + result;
       } else {
         result = genderize("Manavadu", "Manavaraalu", "Grandchild");
-        if (highDepth === 0 && delta > 2) result = "Muni-" + result;
+        if (highDepth === 0 && delta > 2) result = muniPrefix(delta - 2) + result;
       }
     } else if (delta === 1) {
       // Parent/Child or Aunt/Uncle/Niece/Nephew logic
@@ -377,17 +381,13 @@ export default function Home() {
           else if (isCross) result = genderize("Mavayya", "Atta", "Aunt/Uncle");
           else result = genderize("Uncle", "Aunt", "Aunt/Uncle");
         } else {
-          // Target is Niece/Nephew level
-          // Logic: "Parallel" sibling's kids are like own kids, "Cross" sibling's kids are Alludu/Kodalu
-          const viewerSideGender = (pathHigh[highDepth - 1].gender || '').toLowerCase();
-          const isViewerMale = viewerGender === 'male';
-          const targetSideGender = (pathLow[highDepth - 1].gender || '').toLowerCase();
-          
+          // Niece/Nephew: prefix from parent's gender (the sibling/cousin), not viewer's gender
+          const parentOfTarget = pathLow[highDepth - 1];
+          const parentGender = (parentOfTarget?.gender || '').toLowerCase();
           if (isParallel) {
-            const prefix = isViewerMale ? "Anna/Thammudu" : "Akka/Chelli";
+            const prefix = parentGender === 'male' ? "Anna/Thammudu" : "Akka/Chelli";
             result = `${prefix} ${genderize("Koduku", "Kuthuru", "Child")}`;
           } else if (isCross) {
-            // For cross relationship, use the target's gender to determine alludu/kodalu
             result = genderize("Alludu", "Kodalu", "Niece/Nephew");
           }
         }
@@ -445,6 +445,21 @@ export default function Home() {
     await loadData();
     refreshSession();
   };
+
+  const handleNavigateToUser = (userId: number) => {
+    setNavigateToUserId(null); // reset first so same id can re-trigger
+    setTimeout(() => {
+      setNavigateToUserId(userId);
+      // Scroll the tree section into view
+      const treeSection = document.getElementById('family-tree-section');
+      if (treeSection) treeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
+  // Find Abhilash's user id from allUsers for footer navigation
+  const abhilashUser = allUsers.find((u: any) =>
+    u.primary_name?.toLowerCase().includes('abhilash b n v s')
+  );
 
   useEffect(() => {
     if (isSessionLoaded) {
@@ -723,12 +738,12 @@ export default function Home() {
         </section>
 
         {/* Member Search */}
-        <MemberSearch allUsers={allUsers} session={session} />
+        <MemberSearch allUsers={allUsers} session={session} onNavigateToUser={handleNavigateToUser} />
 
 
-        <section className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40">
+        <section id="family-tree-section" className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-4 sm:p-6 shadow-xl shadow-slate-200/40">
           <div className="max-w-full overflow-x-auto">
-            <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} highlightPathIds={highlightPathIds} />
+            <FamilyTree nodes={treeRoots} onShow={handleShowUser} onAdd={openAddModal} onReorder={handleReorder} highlightPathIds={highlightPathIds} navigateToUserId={navigateToUserId} />
           </div>
         </section>
       </main>
@@ -776,7 +791,18 @@ export default function Home() {
 
       <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex items-center justify-center px-3 sm:px-6 py-2 sm:py-3 max-w-7xl text-[11px] sm:text-sm text-slate-500">
-          An initiative by Abhilash B N V S
+          An initiative by{' '}
+          {abhilashUser ? (
+            <button
+              onClick={() => handleNavigateToUser(abhilashUser.id)}
+              className="ml-1 font-semibold text-indigo-600 hover:text-indigo-800 hover:underline underline-offset-2 transition"
+              title="View in family tree"
+            >
+              Abhilash B N V S
+            </button>
+          ) : (
+            <span className="ml-1">Abhilash B N V S</span>
+          )}
         </div>
       </footer>
     </div>

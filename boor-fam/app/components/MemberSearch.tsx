@@ -9,7 +9,6 @@ interface PathStep {
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function getAncestorPath(id: number, users: any[]): any[] {
-  // Returns [self, parent, grandparent, ..., root]
   const path: any[] = [];
   let curr = users.find(u => u.id === id);
   while (curr) {
@@ -42,15 +41,13 @@ function genderize(u: any, male: string, female: string, other: string): string 
 
 function computeRelAndPath(viewerId: number, targetId: number, users: any[]): {
   label: string;
-  steps: PathStep[];   // nodes in order: viewer → ... → target
+  steps: PathStep[];
 } {
   if (viewerId === targetId) return { label: 'Yourself', steps: [] };
 
-  // path1[0] = viewer, path1[last] = root ancestor
   const path1 = getAncestorPath(viewerId, users);
   const path2 = getAncestorPath(targetId, users);
 
-  // Find LCA
   let lcaIdx1 = -1, lcaIdx2 = -1;
   for (let i = 0; i < path1.length; i++) {
     const j = path2.findIndex(p => p.id === path1[i].id);
@@ -62,11 +59,11 @@ function computeRelAndPath(viewerId: number, targetId: number, users: any[]): {
   const lca      = path1[lcaIdx1];
   const viewer   = path1[0];
   const target   = path2[0];
-  const d1       = lcaIdx1;   // steps from viewer up to LCA
-  const d2       = lcaIdx2;   // steps from target up to LCA
+  const d1       = lcaIdx1;
+  const d2       = lcaIdx2;
   const delta    = Math.abs(d1 - d2);
   const highDepth = Math.min(d1, d2);
-  const isTargetHigher = d1 > d2;   // target is ancestor of viewer
+  const isTargetHigher = d1 > d2;
   const pathHigh = isTargetHigher ? path2 : path1;
   const pathLow  = isTargetHigher ? path1 : path2;
   const targetGender = (target.gender || '').toLowerCase();
@@ -81,7 +78,9 @@ function computeRelAndPath(viewerId: number, targetId: number, users: any[]): {
     return { isParallel: gH === gL && gH !== '', isCross: gH !== gL && gH !== '' && gL !== '' };
   };
 
-  // ── Relationship label ────────────────────────────────────────────────
+  // Helper: build "Muni-" prefix string for (delta - 2) extra generations beyond grandparent/grandchild
+  const muniPrefix = (extraGens: number) => 'Muni-'.repeat(Math.max(0, extraGens));
+
   let label = '';
   if (delta >= 2) {
     if (isTargetHigher) {
@@ -89,10 +88,10 @@ function computeRelAndPath(viewerId: number, targetId: number, users: any[]): {
             : targetGender === 'female'
               ? ((pathLow[Math.max(d1,d2)-1]?.gender||'').toLowerCase() === 'male' ? 'Nanamma' : 'Ammamma')
               : 'Grandparent';
-      if (highDepth === 0 && delta > 2) label = 'Muni-' + label;
+      if (highDepth === 0 && delta > 2) label = muniPrefix(delta - 2) + label;
     } else {
       label = genderize(target, 'Manavadu', 'Manavaraalu', 'Grandchild');
-      if (highDepth === 0 && delta > 2) label = 'Muni-' + label;
+      if (highDepth === 0 && delta > 2) label = muniPrefix(delta - 2) + label;
     }
   } else if (delta === 1) {
     if (highDepth === 0) {
@@ -106,7 +105,10 @@ function computeRelAndPath(viewerId: number, targetId: number, users: any[]): {
               : isCross    ? genderize(target, 'Mavayya', 'Atta', 'Aunt/Uncle')
               :               genderize(target, 'Uncle', 'Aunt', 'Aunt/Uncle');
       } else {
-        label = isParallel ? `${viewerGender === 'male' ? 'Anna/Thammudu' : 'Akka/Chelli'} ${genderize(target,'Koduku','Kuthuru','Child')}`
+        // Niece/Nephew: prefix comes from the parent's gender (the sibling/cousin), not viewer's gender
+        const parentOfTarget = pathLow[highDepth - 1]; // the person one step above target on their path
+        const parentGender = (parentOfTarget?.gender || '').toLowerCase();
+        label = isParallel ? `${parentGender === 'male' ? 'Anna/Thammudu' : 'Akka/Chelli'} ${genderize(target,'Koduku','Kuthuru','Child')}`
               : isCross    ? genderize(target, 'Alludu', 'Kodalu', 'Niece/Nephew')
               :               genderize(target, 'Nephew', 'Niece', 'Niece/Nephew');
       }
@@ -125,40 +127,20 @@ function computeRelAndPath(viewerId: number, targetId: number, users: any[]): {
     }
   }
 
-  // ── Path diagram steps ────────────────────────────────────────────────
-  // Correct direction: viewer → up to LCA → down to target
-  //
-  // Going UP (viewer to LCA):  "viewer is son/daughter of parent" → arrow labelled "son of"
-  //   node: viewer, edge: "son of" → next node: viewer's parent
-  //
-  // Going DOWN (LCA to target): "ancestor is father/mother of child" → arrow labelled "father of"
-  //   node: ancestor, edge: "father of" → next node: child
-  //
-  // Final node list: [viewer, ...up_to_lca, ...down_to_target]
-  // where each step i has: steps[i].personName = node, steps[i].edgeLabel = label on arrow after this node
-
   const steps: PathStep[] = [];
-
-  // Upward segment: path1[0] → path1[1] → ... → path1[d1] (LCA)
   for (let i = 0; i < d1; i++) {
     steps.push({
       personName: path1[i].primary_name,
-      edgeLabel: childLabel(path1[i]),   // "son of" / "daughter of"
+      edgeLabel: childLabel(path1[i]),
     });
   }
-
-  // LCA node (turning point) → downward
-  // From LCA, we descend path2 in reverse: path2[d2-1], path2[d2-2], ..., path2[0]
   for (let i = d2; i > 0; i--) {
-    const ancestor = path2[i];   // current ancestor node going down
-    const child    = path2[i-1]; // next node (closer to target)
+    const ancestor = path2[i];
     steps.push({
       personName: ancestor.primary_name,
-      edgeLabel: parentLabel(ancestor),  // "father of" / "mother of"
+      edgeLabel: parentLabel(ancestor),
     });
   }
-
-  // Final destination node (no outgoing edge)
   steps.push({
     personName: target.primary_name,
     edgeLabel: '',
@@ -175,13 +157,45 @@ function formatDate(raw: string | null | undefined): string | null {
   return `${parseInt(m[3])} ${months[parseInt(m[2])-1]} ${m[1]}`;
 }
 
+// ── Descendant helpers ────────────────────────────────────────────────────
+interface DescendantInfo {
+  children: any[];
+  totalDescendants: number;
+  generations: number;
+}
+
+function getDescendantInfo(userId: number, users: any[]): DescendantInfo {
+  const directChildren = users.filter(u => u.parent_id === userId);
+  
+  function countBelow(id: number, depth: number): { count: number; maxDepth: number } {
+    const kids = users.filter(u => u.parent_id === id);
+    if (kids.length === 0) return { count: 0, maxDepth: depth };
+    let total = kids.length;
+    let maxD = depth + 1;
+    for (const k of kids) {
+      const sub = countBelow(k.id, depth + 1);
+      total += sub.count;
+      if (sub.maxDepth > maxD) maxD = sub.maxDepth;
+    }
+    return { count: total, maxDepth: maxD };
+  }
+
+  const { count, maxDepth } = countBelow(userId, 0);
+  return {
+    children: directChildren,
+    totalDescendants: count,
+    generations: directChildren.length > 0 ? maxDepth : 0,
+  };
+}
+
 // ── Component ─────────────────────────────────────────────────────────────
 interface MemberSearchProps {
   allUsers: any[];
   session: any;
+  onNavigateToUser?: (userId: number) => void;
 }
 
-export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
+export default function MemberSearch({ allUsers, session, onNavigateToUser }: MemberSearchProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<any | null>(null);
@@ -189,7 +203,6 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
@@ -229,8 +242,19 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
     setOpen(false);
   };
 
+  const handleNavigateToTree = () => {
+    if (selected && onNavigateToUser) {
+      onNavigateToUser(selected.id);
+    }
+  };
+
+  const descendantInfo = useMemo(() => {
+    if (!selected) return null;
+    return getDescendantInfo(selected.id, allUsers);
+  }, [selected, allUsers]);
+
   return (
-    <div className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/40">
+    <div className="rounded-lg sm:rounded-[2rem] border border-slate-200 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/40 mb-6 sm:mb-10">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="h-9 w-9 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 flex-shrink-0">
@@ -246,7 +270,6 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
 
       {/* Combo: trigger button + search input + dropdown */}
       <div ref={containerRef} className="relative mb-4">
-        {/* Trigger button — shows selected name or placeholder */}
         {!open && (
           <button
             type="button"
@@ -284,7 +307,6 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
           </button>
         )}
 
-        {/* Open state: search input */}
         {open && (
           <div className="relative">
             <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -309,7 +331,6 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
           </div>
         )}
 
-        {/* Dropdown list */}
         {open && (
           <div className="absolute top-full mt-1.5 w-full bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-72 overflow-y-auto">
             {filtered.length === 0 ? (
@@ -349,14 +370,29 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
       {selected && result && (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
 
-          {/* Full detail card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+          {/* Full detail card — clickable to navigate to tree */}
+          <div
+            className="bg-slate-50 border border-slate-200 rounded-2xl p-5 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all group"
+            onClick={handleNavigateToTree}
+            title="Click to locate in family tree"
+          >
             <div className="flex items-start gap-4 mb-4">
               <div className="h-12 w-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-base font-bold flex-shrink-0">
                 {selected.primary_name?.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
               </div>
-              <div>
-                <p className="text-base font-bold text-slate-900">{selected.primary_name}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-base font-bold text-slate-900">{selected.primary_name}</p>
+                  {onNavigateToUser && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-500 bg-indigo-50 border border-indigo-100 rounded-full px-2 py-0.5 group-hover:bg-indigo-100 transition">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Find in tree ↓
+                    </span>
+                  )}
+                </div>
                 {selected.gender && <p className="text-xs text-slate-400">{selected.gender}</p>}
               </div>
             </div>
@@ -378,6 +414,12 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
                 <div className="flex items-start gap-2">
                   <span className="text-slate-400 font-semibold w-24 flex-shrink-0">Contact</span>
                   <span className="text-slate-700">{selected.contact}</span>
+                </div>
+              )}
+              {selected.address && (
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold w-24 flex-shrink-0">Address</span>
+                  <span className="text-slate-700">{selected.address}</span>
                 </div>
               )}
               {(selected.city || selected.country) && (
@@ -420,6 +462,47 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
             )}
           </div>
 
+          {/* Descendants summary — minimalistic pill/stat display */}
+          {descendantInfo && descendantInfo.children.length > 0 && (
+            <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-3">Family Below</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {/* Stats row */}
+                <div className="flex items-center gap-1.5 bg-white border border-amber-100 rounded-xl px-3 py-1.5 shadow-sm">
+                  <span className="text-base">👶</span>
+                  <span className="text-xs font-bold text-slate-700">{descendantInfo.children.length}</span>
+                  <span className="text-[10px] text-slate-400">{descendantInfo.children.length === 1 ? 'child' : 'children'}</span>
+                </div>
+                {descendantInfo.totalDescendants > descendantInfo.children.length && (
+                  <div className="flex items-center gap-1.5 bg-white border border-amber-100 rounded-xl px-3 py-1.5 shadow-sm">
+                    <span className="text-base">🌳</span>
+                    <span className="text-xs font-bold text-slate-700">{descendantInfo.totalDescendants}</span>
+                    <span className="text-[10px] text-slate-400">total descendants</span>
+                  </div>
+                )}
+                {descendantInfo.generations > 1 && (
+                  <div className="flex items-center gap-1.5 bg-white border border-amber-100 rounded-xl px-3 py-1.5 shadow-sm">
+                    <span className="text-base">📍</span>
+                    <span className="text-xs font-bold text-slate-700">{descendantInfo.generations}</span>
+                    <span className="text-[10px] text-slate-400">generations deep</span>
+                  </div>
+                )}
+              </div>
+              {/* Children names as pills */}
+              <div className="flex flex-wrap gap-1.5">
+                {descendantInfo.children.map((child: any) => (
+                  <span
+                    key={child.id}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700 bg-white border border-slate-200 rounded-full px-2.5 py-1"
+                  >
+                    <span className="text-[9px]">{(child.gender || '').toLowerCase() === 'female' ? '♀' : '♂'}</span>
+                    {child.primary_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Relationship */}
           {session && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
@@ -429,7 +512,6 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
                 <span className="text-indigo-600">{result.label}</span>
               </p>
 
-              {/* Path diagram */}
               {result.steps.length > 0 && (
                 <>
                   <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-3">How you're connected</p>
@@ -441,7 +523,6 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
                         const isViewer = isFirst;
                         return (
                           <div key={i} className="flex items-center gap-0">
-                            {/* Node */}
                             <div className="flex flex-col items-center">
                               <div className={`text-[10px] font-bold px-3 py-2 rounded-xl whitespace-nowrap shadow-sm text-center min-w-[80px]
                                 ${isViewer
@@ -456,7 +537,6 @@ export default function MemberSearch({ allUsers, session }: MemberSearchProps) {
                               </div>
                             </div>
 
-                            {/* Arrow to next node */}
                             {step.edgeLabel && (
                               <div className="flex flex-col items-center mx-2 flex-shrink-0">
                                 <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap mb-1">
