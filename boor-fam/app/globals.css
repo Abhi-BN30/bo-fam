@@ -24,3 +24,24 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+html{
+scroll-behavior:smooth;
+}
+
+body{
+overscroll-behavior:none;
+-webkit-tap-highlight-color:transparent;
+}
+
+*{
+-webkit-tap-highlight-color:transparent;
+}
+
+.safe-bottom{
+padding-bottom:env(safe-area-inset-bottom);
+}
+
+.safe-top{
+padding-top:env(safe-area-inset-top);
+}
