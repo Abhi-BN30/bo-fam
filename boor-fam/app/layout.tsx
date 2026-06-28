@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 // import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import ServiceWorker from "./components/ServiceWorker";
+import InstallButton from "./components/InstallButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,7 +22,7 @@ export const metadata = {
 
   manifest: "/manifest.webmanifest",
 
-  themeColor: "#4338ca",
+  // themeColor: "#4338ca",
 
   appleWebApp: {
     capable: true,
@@ -52,6 +53,7 @@ export default function RootLayout({
         {children}
         {/* <Analytics /> */}
         <ServiceWorker />
+        <InstallButton />
       </body>
     </html>
   );
