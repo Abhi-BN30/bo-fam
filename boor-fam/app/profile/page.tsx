@@ -734,7 +734,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* <FamilyTambola allUsers={allUsers} /> */}
+          <FamilyTambola allUsers={allUsers} />
         </section>
 
         {/* Member Search */}
