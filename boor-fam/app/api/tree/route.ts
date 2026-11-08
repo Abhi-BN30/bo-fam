@@ -10,9 +10,11 @@ export async function GET() {
            u.spouse_contact, u.spouse_email,
            u.deceased_primary, u.deceased_spouse,
            u.anniversary::text AS anniversary,
+           (cp.user_id IS NOT NULL) AS has_photo,
            t.parent_id, t."order"
-    FROM users u 
+    FROM users u
     INNER JOIN family_tree t ON u.id = t.user_id
+    LEFT JOIN couple_photos cp ON cp.user_id = u.id
     ORDER BY t.parent_id, t."order"
   `;
   return NextResponse.json(data);

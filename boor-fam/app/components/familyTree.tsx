@@ -14,6 +14,7 @@ export interface TreeNode {
   order?: number;
   deceased_primary?: boolean;
   deceased_spouse?: boolean;
+  has_photo?: boolean;
   children: TreeNode[];
 }
 
@@ -74,6 +75,7 @@ function TreeNodeComponent({
   isReorderMode, highlightPathIds, onMove, navigateToUserId,
 }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(level < 1);
+  const [showCouplePhoto, setShowCouplePhoto] = useState(false);
 
   // Auto-expand this node if the navigation target lives somewhere in this subtree
   useEffect(() => {
@@ -115,8 +117,16 @@ function TreeNodeComponent({
         )}
 
         {/* ── Card ── border colour never changes for deceased ── */}
-        <div data-node-id={node.id} className={`flex-shrink-0 bg-white border-l-4 rounded-xl p-4 sm:p-5 w-56 sm:w-64 shadow-md transition-all ${borderColor} ${cardShadow}`}>
+        <div data-node-id={node.id} className={`relative overflow-hidden flex-shrink-0 bg-white border-l-4 rounded-xl w-56 sm:w-64 shadow-md transition-all ${borderColor} ${cardShadow}`}>
 
+          {/* Couple portrait: fades naturally into the white card body. */}
+          {node.has_photo && (
+            <button type="button" onClick={e => { e.stopPropagation(); setShowCouplePhoto(true); }} aria-label={`Enlarge photo of ${node.primary_name}`} className="relative block w-full h-36 overflow-hidden bg-slate-100">
+              <img src={`/api/couple-photo/${node.id}`} alt={`${node.primary_name}${node.spouse_name ? ` and ${node.spouse_name}` : ''}`} className="absolute inset-0 h-full w-full object-cover object-center" />
+              <span className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-white" />
+            </button>
+          )}
+          <div className="p-4 sm:p-5">
           {/* Top row: collapse toggle + child count */}
           <div className="flex items-start justify-between gap-2 mb-3">
             {hasChildren ? (
@@ -181,6 +191,7 @@ function TreeNodeComponent({
               Add Child
             </button>
           </div>
+          </div>
         </div>
 
         {/* Reorder controls */}
@@ -236,6 +247,14 @@ function TreeNodeComponent({
               </div>
             );
           })}
+        </div>
+      )}
+      {showCouplePhoto && node.has_photo && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 p-4" onClick={() => setShowCouplePhoto(false)} role="dialog" aria-modal="true" aria-label="Couple photo viewer">
+          <button type="button" onClick={() => setShowCouplePhoto(false)} className="absolute right-5 top-5 rounded-full bg-white/15 p-3 text-white hover:bg-white/25" aria-label="Close photo viewer">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+          <img src={`/api/couple-photo/${node.id}`} alt={`${node.primary_name}${node.spouse_name ? ` and ${node.spouse_name}` : ''}`} onClick={e => e.stopPropagation()} className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl" />
         </div>
       )}
     </div>

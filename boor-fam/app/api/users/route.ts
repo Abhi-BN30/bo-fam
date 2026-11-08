@@ -140,6 +140,11 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'missing id' }, { status: 400 });
-  const res = await sql`SELECT *, dob::text AS dob, anniversary::text AS anniversary FROM users WHERE id = ${id}`;
+  const res = await sql`
+    SELECT u.*, u.dob::text AS dob, u.anniversary::text AS anniversary,
+           (cp.user_id IS NOT NULL) AS has_photo
+    FROM users u LEFT JOIN couple_photos cp ON cp.user_id = u.id
+    WHERE u.id = ${id}
+  `;
   return NextResponse.json(res[0] || null);
 }
