@@ -15,6 +15,8 @@ export interface TreeNode {
   deceased_primary?: boolean;
   deceased_spouse?: boolean;
   has_photo?: boolean;
+  card_position_x?: number;
+  card_position_y?: number;
   children: TreeNode[];
 }
 
@@ -122,7 +124,7 @@ function TreeNodeComponent({
           {/* Couple portrait: fades naturally into the white card body. */}
           {node.has_photo && (
             <button type="button" onClick={e => { e.stopPropagation(); setShowCouplePhoto(true); }} aria-label={`Enlarge photo of ${node.primary_name}`} className="relative block w-full h-36 overflow-hidden bg-slate-100">
-              <img src={`/api/couple-photo/${node.id}`} alt={`${node.primary_name}${node.spouse_name ? ` and ${node.spouse_name}` : ''}`} className="absolute inset-0 h-full w-full object-cover object-center" />
+              <img src={`/api/couple-photo/${node.id}`} alt={`${node.primary_name}${node.spouse_name ? ` and ${node.spouse_name}` : ''}`} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: `${node.card_position_x ?? 50}% ${node.card_position_y ?? 50}%`, transform: `scale(${node.card_zoom ?? 1})` }} />
               <span className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-white" />
             </button>
           )}

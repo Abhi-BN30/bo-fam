@@ -39,29 +39,61 @@ export async function POST(req: Request, { params }: RouteContext) {
 
   const formData = await req.formData();
   const file = formData.get('photo');
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'Choose an image to upload.' }, { status: 400 });
-  }
-  if (!ALLOWED_TYPES.has(file.type)) {
-    return NextResponse.json({ error: 'Only JPG, PNG and WebP images are supported.' }, { status: 415 });
-  }
-  if (file.size === 0 || file.size > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ error: 'Image must be between 1 byte and 5 MB.' }, { status: 413 });
-  }
+  const position = (value: FormDataEntryValue | null, fallback: number) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : fallback;
+  };
+  const cardX = position(formData.get('card_position_x'), 50);
+  const cardY = position(formData.get('card_position_y'), 50);
+  const profileX = position(formData.get('profile_position_x'), 50);
+  const profileY = position(formData.get('profile_position_y'), 50);
+  const zoom = (value: FormDataEntryValue | null) => { const parsed = Number(value); return Number.isFinite(parsed) ? Math.max(1, Math.min(3, parsed)) : 1; };
+  const cardZoom = zoom(formData.get('card_zoom'));
+  const profileZoom = zoom(formData.get('profile_zoom'));
 
   const user = await sql`SELECT id FROM users WHERE id = ${Number(id)} LIMIT 1`;
   if (!user.length) return NextResponse.json({ error: 'Family member not found.' }, { status: 404 });
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const base64 = bytes.toString('base64');
-  await sql`
-    INSERT INTO couple_photos (user_id, image_data, content_type, updated_at)
-    VALUES (${Number(id)}, decode(${base64}, 'base64'), ${file.type}, NOW())
-    ON CONFLICT (user_id) DO UPDATE SET
-      image_data = EXCLUDED.image_data,
-      content_type = EXCLUDED.content_type,
-      updated_at = NOW()
-  `;
+  if (file instanceof File && file.size > 0) {
+    if (!ALLOWED_TYPES.has(file.type)) {
+      return NextResponse.json({ error: 'Only JPG, PNG and WebP images are supported.' }, { status: 415 });
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: 'Image must be 5 MB or smaller.' }, { status: 413 });
+    }
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const base64 = bytes.toString('base64');
+    await sql`
+      INSERT INTO couple_photos (
+        user_id, image_data, content_type, card_position_x, card_position_y,
+        profile_position_x, profile_position_y, card_zoom, profile_zoom, updated_at
+      ) VALUES (
+        ${Number(id)}, decode(${base64}, 'base64'), ${file.type}, ${cardX}, ${cardY},
+        ${profileX}, ${profileY}, ${cardZoom}, ${profileZoom}, NOW()
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        image_data = EXCLUDED.image_data,
+        content_type = EXCLUDED.content_type,
+        card_position_x = EXCLUDED.card_position_x,
+        card_position_y = EXCLUDED.card_position_y,
+        profile_position_x = EXCLUDED.profile_position_x,
+        profile_position_y = EXCLUDED.profile_position_y,
+        card_zoom = EXCLUDED.card_zoom,
+        profile_zoom = EXCLUDED.profile_zoom,
+        updated_at = NOW()
+    `;
+  } else {
+    const updated = await sql`
+      UPDATE couple_photos SET
+        card_position_x = ${cardX}, card_position_y = ${cardY},
+        profile_position_x = ${profileX}, profile_position_y = ${profileY},
+        card_zoom = ${cardZoom}, profile_zoom = ${profileZoom},
+        updated_at = NOW()
+      WHERE user_id = ${Number(id)}
+      RETURNING user_id
+    `;
+    if (!updated.length) return NextResponse.json({ error: 'Choose a photo before saving its framing.' }, { status: 400 });
+  }
 
   return NextResponse.json({ success: true, photoUrl: `/api/couple-photo/${id}?v=${Date.now()}` });
 }

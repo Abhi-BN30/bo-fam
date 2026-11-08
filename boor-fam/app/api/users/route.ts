@@ -142,7 +142,12 @@ export async function GET(req: Request) {
   if (!id) return NextResponse.json({ error: 'missing id' }, { status: 400 });
   const res = await sql`
     SELECT u.*, u.dob::text AS dob, u.anniversary::text AS anniversary,
-           (cp.user_id IS NOT NULL) AS has_photo
+           (cp.user_id IS NOT NULL) AS has_photo,
+           COALESCE(cp.card_position_x, 50) AS card_position_x,
+           COALESCE(cp.card_position_y, 50) AS card_position_y,
+           COALESCE(cp.profile_position_x, 50) AS profile_position_x,
+           COALESCE(cp.profile_position_y, 50) AS profile_position_y,
+           COALESCE(cp.profile_zoom, 1) AS profile_zoom
     FROM users u LEFT JOIN couple_photos cp ON cp.user_id = u.id
     WHERE u.id = ${id}
   `;

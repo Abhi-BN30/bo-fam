@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
 import { authFetch } from '../lib/authFetch';
 
@@ -24,6 +24,60 @@ function formatDate(dateStr: string | null | undefined): string {
   } catch { return dateStr; }
 }
 
+
+function ImagePositionPreview({
+  src, label, hint, x, y, zoom, onChange,
+}: {
+  src: string; label: string; hint: string; x: number; y: number; zoom: number;
+  onChange: (x: number, y: number, zoom: number) => void;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+  const lastPointer = useRef<{ x: number; y: number } | null>(null);
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || !lastPointer.current) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const deltaX = ((event.clientX - lastPointer.current.x) / rect.width) * 100;
+    const deltaY = ((event.clientY - lastPointer.current.y) / rect.height) * 100;
+    lastPointer.current = { x: event.clientX, y: event.clientY };
+    // Move the photograph with the pointer, just like a normal crop editor.
+    onChange(
+      Math.round(Math.max(0, Math.min(100, x - deltaX / zoom))),
+      Math.round(Math.max(0, Math.min(100, y - deltaY / zoom))),
+      zoom,
+    );
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-bold text-slate-800">{label}</p>
+        <span className="text-[10px] text-slate-500">Drag photo to adjust</span>
+      </div>
+      <div
+        className={`relative aspect-[16/9] w-full overflow-hidden rounded-xl border-2 border-white bg-slate-900 shadow-[0_0_0_1px_rgba(148,163,184,.6)] touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); lastPointer.current = { x: event.clientX, y: event.clientY }; setIsDragging(true); }}
+        onPointerMove={handlePointerMove}
+        onPointerUp={() => { setIsDragging(false); lastPointer.current = null; }}
+        onPointerCancel={() => { setIsDragging(false); lastPointer.current = null; }}
+      >
+        <img src={src} alt={`${label} crop preview`} draggable={false} className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover" style={{ objectPosition: `${x}% ${y}%`, transform: `scale(${zoom})` }} />
+        <div className="pointer-events-none absolute inset-0 border border-white/90" />
+        <span className="pointer-events-none absolute left-2 top-2 h-5 w-5 border-l-2 border-t-2 border-white drop-shadow" />
+        <span className="pointer-events-none absolute right-2 top-2 h-5 w-5 border-r-2 border-t-2 border-white drop-shadow" />
+        <span className="pointer-events-none absolute bottom-2 left-2 h-5 w-5 border-b-2 border-l-2 border-white drop-shadow" />
+        <span className="pointer-events-none absolute bottom-2 right-2 h-5 w-5 border-b-2 border-r-2 border-white drop-shadow" />
+        <span className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-[10px] font-semibold text-white">Preview frame</span>
+      </div>
+      <p className="text-[11px] leading-4 text-slate-500">{hint}</p>
+      <div className="flex items-center gap-3 rounded-xl bg-white px-3 py-2">
+        <span className="text-slate-500 text-lg leading-none">−</span>
+        <input aria-label={`${label} zoom`} type="range" min="1" max="3" step="0.05" value={zoom} onChange={e => onChange(x, y, Number(e.target.value))} className="w-full accent-indigo-600" />
+        <span className="text-slate-500 text-lg leading-none">+</span>
+        <span className="min-w-12 text-right text-[11px] font-semibold text-slate-600">{Math.round(zoom * 100)}%</span>
+      </div>
+    </div>
+  );
+}
+
 export default function UserModal({ isOpen, onClose, onRefresh, mode, initialData, onEditRequested }: UserModalProps) {
   const [form, setForm] = useState<Record<string, any>>(initialData || {});
   const [error, setError] = useState('');
@@ -41,6 +95,10 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  // One shared crop is used by both the family-tree card and profile header.
+  const [photoPosition, setPhotoPosition] = useState({ x: 50, y: 50 });
+  const [photoZoom, setPhotoZoom] = useState(1);
 
   // Replace normalizeDob everywhere it appears:
   const normalizeToInputDate = (raw: string | undefined | null): string => {
@@ -68,6 +126,9 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
     setIsDeleting(false);
     setPhotoUrl(data.has_photo ? `/api/couple-photo/${data.id}?v=${Date.now()}` : null);
     setPhotoFile(null);
+    setPhotoPreviewUrl(null);
+    setPhotoPosition({ x: Number(data.card_position_x ?? 50), y: Number(data.card_position_y ?? 50) });
+    setPhotoZoom(Number(data.card_zoom ?? 1));
     setPhotoError('');
     setShowPhotoViewer(false);
     if (data.country) {
@@ -82,6 +143,13 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
       setStates([]); setCities([]); setShowCustomCityInput(false); setCustomCityValue('');
     }
   }, [initialData]);
+
+  useEffect(() => {
+    if (!photoFile) { setPhotoPreviewUrl(null); return; }
+    const url = URL.createObjectURL(photoFile);
+    setPhotoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
 
   const handleCountryChange = (country: string) => {
     setForm({ ...form, country, state: '', city: '' });
@@ -121,18 +189,30 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
   };
 
   const handlePhotoUpload = async () => {
-    if (!form?.id || !photoFile) return;
+    if (!form?.id || (!photoFile && !photoUrl)) return;
     setPhotoBusy(true);
     setPhotoError('');
     try {
       const body = new FormData();
-      body.append('photo', photoFile);
+      if (photoFile) body.append('photo', photoFile);
+      // Keep the legacy DB fields in sync, but expose only one shared crop control.
+      body.append('card_position_x', String(photoPosition.x));
+      body.append('card_position_y', String(photoPosition.y));
+      body.append('profile_position_x', String(photoPosition.x));
+      body.append('profile_position_y', String(photoPosition.y));
+      body.append('card_zoom', String(photoZoom));
+      body.append('profile_zoom', String(photoZoom));
       const res = await authFetch(`/api/couple-photo/${form.id}`, { method: 'POST', body });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'Unable to upload photo.');
       setPhotoUrl(`${result.photoUrl}&refresh=${Date.now()}`);
       setPhotoFile(null);
-      setForm((current: Record<string, any>) => ({ ...current, has_photo: true }));
+      setForm((current: Record<string, any>) => ({
+        ...current, has_photo: true,
+        card_position_x: photoPosition.x, card_position_y: photoPosition.y,
+        profile_position_x: photoPosition.x, profile_position_y: photoPosition.y,
+        card_zoom: photoZoom, profile_zoom: photoZoom,
+      }));
       onRefresh();
     } catch (err) {
       setPhotoError(err instanceof Error ? err.message : 'Unable to upload photo.');
@@ -218,7 +298,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
         {isView && photoUrl ? (
           <div className="relative -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6 h-64 sm:h-72 overflow-hidden bg-slate-100">
             <button type="button" onClick={() => setShowPhotoViewer(true)} aria-label="Enlarge couple photo" className="absolute inset-0 h-full w-full text-left">
-              <img src={photoUrl} alt={`${form.primary_name}${form.spouse_name ? ` and ${form.spouse_name}` : ''}`} className="h-full w-full object-cover object-center" />
+              <img src={photoUrl} alt={`${form.primary_name}${form.spouse_name ? ` and ${form.spouse_name}` : ''}`} className="h-full w-full object-cover" style={{ objectPosition: `${photoPosition.x}% ${photoPosition.y}%`, transform: `scale(${photoZoom})` }} />
               <span className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-white" />
             </button>
             <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-2 text-center pointer-events-none">
@@ -240,21 +320,32 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
         )}
 
         {!isView && mode === 'edit' && form?.id && (
-          <section className="mb-5 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-3">
+          <section className="mb-5 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-indigo-700">Couple photo</p>
-                <p className="text-xs text-slate-500 mt-1">JPG, PNG or WebP · up to 5 MB</p>
+                <p className="text-xs font-black uppercase tracking-widest text-indigo-700">Photo</p>
+                <p className="text-xs text-slate-500 mt-1">up to 5 MB</p>
               </div>
               {photoUrl && <button type="button" onClick={handlePhotoRemove} disabled={photoBusy} className="text-xs font-bold text-rose-600 hover:text-rose-700 disabled:opacity-50">Remove photo</button>}
             </div>
-            <div className="flex items-center gap-3">
-              {photoUrl ? <img src={photoUrl} alt="Current couple" className="h-16 w-16 rounded-xl object-cover" /> : <div className="h-16 w-16 rounded-xl bg-white border border-dashed border-indigo-200 flex items-center justify-center text-2xl">📷</div>}
-              <div className="min-w-0 flex-1 space-y-2">
-                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { setPhotoFile(e.target.files?.[0] || null); setPhotoError(''); }} className="block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-xs file:font-semibold file:text-indigo-700" />
-                <button type="button" onClick={handlePhotoUpload} disabled={!photoFile || photoBusy} className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-40">{photoBusy ? 'Uploading…' : photoUrl ? 'Replace photo' : 'Upload photo'}</button>
-              </div>
-            </div>
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { setPhotoFile(e.target.files?.[0] || null); setPhotoError(''); }} className="block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-xs file:font-semibold file:text-indigo-700" />
+            {(photoPreviewUrl || photoUrl) ? (
+              <>
+  
+                <ImagePositionPreview
+                  src={photoPreviewUrl || photoUrl!}
+                  label="Photo preview"
+                  hint="Adjust here."
+                  x={photoPosition.x}
+                  y={photoPosition.y}
+                  zoom={photoZoom}
+                  onChange={(x, y, zoom) => { setPhotoPosition({ x, y }); setPhotoZoom(zoom); }}
+                />
+              </>
+            ) : (
+              <p className="rounded-xl border border-dashed border-indigo-200 bg-white p-4 text-center text-xs text-slate-500">Choose a photo</p>
+            )}
+            <button type="button" onClick={handlePhotoUpload} disabled={(!photoFile && !photoUrl) || photoBusy} className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-40">{photoBusy ? 'Saving…' : photoFile ? 'Upload Photo' : 'Save Photo'}</button>
             {photoError && <p className="text-xs font-medium text-rose-600">{photoError}</p>}
           </section>
         )}
