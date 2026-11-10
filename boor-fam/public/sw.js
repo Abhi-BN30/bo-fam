@@ -1,4 +1,4 @@
-const CACHE = "boorfam-v3";
+const CACHE = "boorfam-v5";
 
 const FILES = [
   "/",
@@ -94,4 +94,35 @@ self.skipWaiting();
 
 }
 
+});
+// Web Push: notifications are displayed by the service worker even when the PWA is closed.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) {}
+  const title = data.title || 'Family reminder';
+  const options = {
+    body: data.body || 'You have a family reminder.',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag || 'family-reminder',
+    renotify: false,
+    data: { url: data.url || '/profile' }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || '/profile', self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) {
+      if ('focus' in client) {
+        await client.focus();
+        if ('navigate' in client) await client.navigate(target);
+        return;
+      }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(target);
+  })());
 });

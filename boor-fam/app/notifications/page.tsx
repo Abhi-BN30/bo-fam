@@ -58,8 +58,15 @@ export default function NotificationSettingsPage() {
         const canPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
         setSupported(canPush);
         if (canPush) {
-          const registration = await navigator.serviceWorker.ready;
-          setEnabled(!!(await registration.pushManager.getSubscription()));
+          // Do not wait indefinitely for `serviceWorker.ready`: on devices where
+          // registration failed or has not completed, that promise can remain pending.
+          const registration = await navigator.serviceWorker.getRegistration('/');
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            setEnabled(!!subscription);
+          } else {
+            setEnabled(false);
+          }
         }
       } catch {
         setMessage('Could not load settings. Please try again.');
@@ -101,7 +108,8 @@ export default function NotificationSettingsPage() {
       if (permission !== 'granted') {
         throw new Error('Notifications were not allowed. Check your browser settings.');
       }
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      if (!registration) throw new Error('This device is still setting up notifications. Refresh the page and try again.');
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
@@ -125,7 +133,8 @@ export default function NotificationSettingsPage() {
 
   const disable = async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      if (!registration) throw new Error('No notification service is registered on this device. Refresh the page and try again.');
       const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
         await authFetch('/api/notifications/subscribe', {
@@ -149,7 +158,8 @@ export default function NotificationSettingsPage() {
     setMessage('');
     setMessageIsError(false);
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      if (!registration) throw new Error('No notification service is registered on this device. Refresh the page and enable notifications again.');
       const subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
         throw new Error('Enable phone notifications on this device first.');
