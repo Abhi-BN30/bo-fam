@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ServiceWorker from "./components/ServiceWorker";
 import InstallButton from "./components/InstallButton";
-import LanguageProvider from "./components/LanguageProvider";
+// import LanguageProvider from "./components/LanguageProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
