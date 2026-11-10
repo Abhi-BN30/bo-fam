@@ -147,6 +147,7 @@ export async function GET(req: Request) {
            COALESCE(cp.card_position_y, 50) AS card_position_y,
            COALESCE(cp.profile_position_x, 50) AS profile_position_x,
            COALESCE(cp.profile_position_y, 50) AS profile_position_y,
+           COALESCE(cp.card_zoom, 1) AS card_zoom,
            COALESCE(cp.profile_zoom, 1) AS profile_zoom
     FROM users u LEFT JOIN couple_photos cp ON cp.user_id = u.id
     WHERE u.id = ${id}

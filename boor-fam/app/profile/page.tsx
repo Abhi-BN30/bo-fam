@@ -181,6 +181,24 @@ export default function Home() {
     setIsAddModalOpen(true);
   };
 
+  const handleEditOwnProfile = async () => {
+    if (!session?.id) return;
+    try {
+      // The lightweight auth session does not include couple-photo metadata.
+      // Fetch the complete user record so the editor receives has_photo and crop settings.
+      const res = await authFetch(`/api/users?id=${session.id}`);
+      if (!res.ok) throw new Error('Unable to load your profile.');
+      const data = await res.json();
+      if (!data?.id) throw new Error('Your profile could not be found.');
+      setSelectedUser(data);
+      setUserModalMode('edit');
+      setIsUserModalOpen(true);
+    } catch (err) {
+      console.error('Failed to load own profile for editing:', err);
+      alert(err instanceof Error ? err.message : 'Unable to load your profile.');
+    }
+  };
+
   const handleShowUser = async (id: number) => {
     try {
       const res = await fetch(`/api/users?id=${id}`);
@@ -537,11 +555,7 @@ export default function Home() {
                 <ProfileDropdown
                   userName={session.primary_name}
                   userEmail={session.primary_email}
-                  onEditProfile={() => {
-                    setSelectedUser(session);
-                    setUserModalMode('edit');
-                    setIsUserModalOpen(true);
-                  }}
+                  onEditProfile={handleEditOwnProfile}
                   onEditPin={() => {
                     setIsPinModalOpen(true);
                   }}

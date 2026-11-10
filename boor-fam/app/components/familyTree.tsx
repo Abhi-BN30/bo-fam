@@ -1,3 +1,4 @@
+import CouplePhotoImage from './CouplePhotoImage';
 import { useState, useEffect } from 'react';
 
 export interface TreeNode {
@@ -125,7 +126,7 @@ function TreeNodeComponent({
           {/* Couple portrait: fades naturally into the white card body. */}
           {node.has_photo && (
             <button type="button" onClick={e => { e.stopPropagation(); setShowCouplePhoto(true); }} aria-label={`Enlarge photo of ${node.primary_name}`} className="relative block w-full h-36 overflow-hidden bg-slate-100">
-              <img src={`/api/couple-photo/${node.id}`} alt={`${node.primary_name}${node.spouse_name ? ` and ${node.spouse_name}` : ''}`} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: `${node.card_position_x ?? 50}% ${node.card_position_y ?? 50}%`, transform: `scale(${node.card_zoom ?? 1})` }} />
+              <CouplePhotoImage src={`/api/couple-photo/${node.id}`} alt={`${node.primary_name}${node.spouse_name ? ` and ${node.spouse_name}` : ''}`} className="absolute inset-0 h-full w-full" x={node.card_position_x ?? 50} y={node.card_position_y ?? 50} zoom={node.card_zoom ?? 1} />
               <span className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-white" />
             </button>
           )}

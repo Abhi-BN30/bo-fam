@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { COUNTRIES, getStatesByCountry, getCitiesByCountry } from '../lib/locations';
 import { authFetch } from '../lib/authFetch';
+import CouplePhotoImage from './CouplePhotoImage';
 
 // Master PIN required to confirm deleting a user from the tree.
 // This is intentionally independent of any individual user's login PIN
@@ -33,33 +34,76 @@ function ImagePositionPreview({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const lastPointer = useRef<{ x: number; y: number } | null>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [imageRatio, setImageRatio] = useState(16 / 9);
+
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!isDragging || !lastPointer.current) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    const deltaX = ((event.clientX - lastPointer.current.x) / rect.width) * 100;
-    const deltaY = ((event.clientY - lastPointer.current.y) / rect.height) * 100;
+    const deltaX = event.clientX - lastPointer.current.x;
+    const deltaY = event.clientY - lastPointer.current.y;
     lastPointer.current = { x: event.clientX, y: event.clientY };
-    // Move the photograph with the pointer, just like a normal crop editor.
+
+    // Pan is calculated against the actual rendered image bounds. Each axis
+    // remains draggable until that axis reaches the image edge.
+    const renderedWidth = Math.max(rect.width, rect.height * imageRatio);
+    const renderedHeight = renderedWidth / imageRatio;
+    const maxPanX = Math.max(0, (renderedWidth * zoom - rect.width) / 2);
+    const maxPanY = Math.max(0, (renderedHeight * zoom - rect.height) / 2);
+    const nextX = maxPanX > 0 ? x - (deltaX / maxPanX) * 50 : x;
+    const nextY = maxPanY > 0 ? y - (deltaY / maxPanY) * 50 : y;
+
     onChange(
-      Math.round(Math.max(0, Math.min(100, x - deltaX / zoom))),
-      Math.round(Math.max(0, Math.min(100, y - deltaY / zoom))),
+      Math.round(Math.max(0, Math.min(100, nextX))),
+      Math.round(Math.max(0, Math.min(100, nextY))),
       zoom,
     );
   };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-bold text-slate-800">{label}</p>
-        <span className="text-[10px] text-slate-500">Drag photo to adjust</span>
       </div>
       <div
+        ref={frameRef}
         className={`relative aspect-[16/9] w-full overflow-hidden rounded-xl border-2 border-white bg-slate-900 shadow-[0_0_0_1px_rgba(148,163,184,.6)] touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-        onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); lastPointer.current = { x: event.clientX, y: event.clientY }; setIsDragging(true); }}
+        onPointerDown={event => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          lastPointer.current = { x: event.clientX, y: event.clientY };
+          setIsDragging(true);
+        }}
         onPointerMove={handlePointerMove}
         onPointerUp={() => { setIsDragging(false); lastPointer.current = null; }}
         onPointerCancel={() => { setIsDragging(false); lastPointer.current = null; }}
       >
-        <img src={src} alt={`${label} crop preview`} draggable={false} className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover" style={{ objectPosition: `${x}% ${y}%`, transform: `scale(${zoom})` }} />
+        <img
+          ref={imageRef}
+          src={src}
+          alt={`${label} crop preview`}
+          draggable={false}
+          onLoad={event => {
+            const image = event.currentTarget;
+            if (image.naturalWidth && image.naturalHeight) setImageRatio(image.naturalWidth / image.naturalHeight);
+          }}
+          className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
+          style={{
+            width: imageRatio >= (16 / 9) ? `${(imageRatio / (16 / 9)) * 100}%` : '100%',
+            height: imageRatio < (16 / 9) ? `${((16 / 9) / imageRatio) * 100}%` : '100%',
+            objectFit: 'fill',
+            transform: (() => {
+              const rect = frameRef.current?.getBoundingClientRect();
+              if (!rect) return `translate(-50%, -50%) scale(${zoom})`;
+              const rw = Math.max(rect.width, rect.height * imageRatio);
+              const rh = rw / imageRatio;
+              const tx = ((50 - x) / 50) * Math.max(0, (rw * zoom - rect.width) / 2);
+              const ty = ((50 - y) / 50) * Math.max(0, (rh * zoom - rect.height) / 2);
+              return `translate(-50%, -50%) translate(${tx}px, ${ty}px) scale(${zoom})`;
+            })(),
+            transformOrigin: 'center center',
+          }}
+        />
         <div className="pointer-events-none absolute inset-0 border border-white/90" />
         <span className="pointer-events-none absolute left-2 top-2 h-5 w-5 border-l-2 border-t-2 border-white drop-shadow" />
         <span className="pointer-events-none absolute right-2 top-2 h-5 w-5 border-r-2 border-t-2 border-white drop-shadow" />
@@ -298,7 +342,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
         {isView && photoUrl ? (
           <div className="relative -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6 h-64 sm:h-72 overflow-hidden bg-slate-100">
             <button type="button" onClick={() => setShowPhotoViewer(true)} aria-label="Enlarge couple photo" className="absolute inset-0 h-full w-full text-left">
-              <img src={photoUrl} alt={`${form.primary_name}${form.spouse_name ? ` and ${form.spouse_name}` : ''}`} className="h-full w-full object-cover" style={{ objectPosition: `${photoPosition.x}% ${photoPosition.y}%`, transform: `scale(${photoZoom})` }} />
+              <CouplePhotoImage src={photoUrl} alt={`${form.primary_name}${form.spouse_name ? ` and ${form.spouse_name}` : ''}`} className="h-full w-full" x={photoPosition.x} y={photoPosition.y} zoom={photoZoom} />
               <span className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-white" />
             </button>
             <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-2 text-center pointer-events-none">
@@ -324,18 +368,18 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-indigo-700">Couple photo & framing</p>
-                <p className="text-xs text-slate-500 mt-1">JPG, PNG or WebP · up to 5 MB</p>
+                <p className="text-xs text-slate-500 mt-1">up to 5 MB</p>
               </div>
               {photoUrl && <button type="button" onClick={handlePhotoRemove} disabled={photoBusy} className="text-xs font-bold text-rose-600 hover:text-rose-700 disabled:opacity-50">Remove photo</button>}
             </div>
             <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { setPhotoFile(e.target.files?.[0] || null); setPhotoError(''); }} className="block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-xs file:font-semibold file:text-indigo-700" />
             {(photoPreviewUrl || photoUrl) ? (
               <>
-                <p className="text-xs text-slate-600">Drag the photo and use − / + to adjust the frame. This single setting is shared by the couple card and profile header. The full original is always shown when opened.</p>
+                
                 <ImagePositionPreview
                   src={photoPreviewUrl || photoUrl!}
                   label="Shared photo preview"
-                  hint="Adjust once here. The same framing is used in both places."
+                  hint="Adjust here."
                   x={photoPosition.x}
                   y={photoPosition.y}
                   zoom={photoZoom}
@@ -345,7 +389,7 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
             ) : (
               <p className="rounded-xl border border-dashed border-indigo-200 bg-white p-4 text-center text-xs text-slate-500">Choose a photo to adjust its card and profile framing.</p>
             )}
-            <button type="button" onClick={handlePhotoUpload} disabled={(!photoFile && !photoUrl) || photoBusy} className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-40">{photoBusy ? 'Saving…' : photoFile ? 'Upload photo & save framing' : 'Save framing'}</button>
+            <button type="button" onClick={handlePhotoUpload} disabled={(!photoFile && !photoUrl) || photoBusy} className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-40">{photoBusy ? 'Saving…' : photoFile ? 'Upload photo & Save it' : 'Save Photo'}</button>
             {photoError && <p className="text-xs font-medium text-rose-600">{photoError}</p>}
           </section>
         )}
