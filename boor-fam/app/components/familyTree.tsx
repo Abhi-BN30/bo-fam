@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export interface TreeNode {
+  card_zoom: number;
   id: number;
   primary_name: string;
   spouse_name?: string;
