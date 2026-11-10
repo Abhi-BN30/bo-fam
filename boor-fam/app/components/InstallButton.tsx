@@ -81,7 +81,7 @@ export default function InstallButton() {
 
   if (isInstalled) return null;
 
-  const buttonLabel = platform === "samsung" ? "Install BoorFam" : "Install BoorFam";
+  const buttonLabel = platform === "samsung" ? "Install" : "Install";
 
   return (
     <>
@@ -89,7 +89,7 @@ export default function InstallButton() {
         type="button"
         onClick={install}
         className="fixed bottom-6 right-5 z-[80] inline-flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-xl shadow-indigo-900/20 transition hover:bg-indigo-700 active:scale-95"
-        aria-label="Install BoorFam app"
+        aria-label="Install app"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -102,8 +102,8 @@ export default function InstallButton() {
           <div className="w-full max-w-md rounded-3xl bg-white p-6 text-slate-900 shadow-2xl dark:bg-slate-900 dark:text-white">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">BoorFam app</p>
-                <h2 id="boorfam-install-title" className="mt-1 text-xl font-bold">Add BoorFam to your device</h2>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">The Family App</p>
+                <h2 id="boorfam-install-title" className="mt-1 text-xl font-bold">Add the app to your device</h2>
               </div>
               <button type="button" onClick={() => setShowHelp(false)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Close install instructions">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -112,7 +112,7 @@ export default function InstallButton() {
 
             {platform === "ios" ? (
               <>
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">On iPhone or iPad, Safari needs you to add the website from its Share menu. This creates an app-like BoorFam icon on your Home Screen.</p>
+                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">On iPhone or iPad, Safari needs you to add the website from its Share menu. This creates an app your Home Screen.</p>
                 <ol className="mt-5 space-y-3 text-sm">
                   <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">1</span><span>Open this page in <strong>Safari</strong>.</span></li>
                   <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">2</span><span>Tap the <strong>Share</strong> icon.</span></li>
@@ -121,15 +121,15 @@ export default function InstallButton() {
               </>
             ) : platform === "samsung" ? (
               <>
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">Samsung Internet may generate an Android install package that triggers the Play Protect outdated-Android warning shown on your device. To avoid that browser-specific install route, open BoorFam in Chrome and install it there.</div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-900">Samsung Internet may generate an Android install package that triggers the Play Protect outdated-Android warning shown on your device. To avoid that browser-specific install route, open the app in Chrome and install it there.</div>
                 <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">Tap the button below. Chrome must be installed on your Android device.</p>
-                <button type="button" onClick={openChrome} className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white hover:bg-indigo-700">Open BoorFam in Chrome</button>
-                <button type="button" onClick={copyLink} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold dark:border-slate-700">{copied ? "Link copied" : "Copy BoorFam link"}</button>
+                <button type="button" onClick={openChrome} className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white hover:bg-indigo-700">Open the app in Chrome</button>
+                <button type="button" onClick={copyLink} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold dark:border-slate-700">{copied ? "Link copied" : "Copy link"}</button>
                 <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">In Chrome, tap the browser menu (⋮) and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</p>
               </>
             ) : platform === "android" ? (
               <>
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">If the install prompt doesn't appear, use Chrome's browser menu to add BoorFam to your Home Screen.</p>
+                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">If the install prompt doesn't appear, use Chrome's browser menu to add the app to your Home Screen.</p>
                 <ol className="mt-4 space-y-3 text-sm">
                   <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">1</span><span>Open this page in <strong>Google Chrome</strong>.</span></li>
                   <li className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">2</span><span>Tap the <strong>⋮</strong> menu.</span></li>
@@ -137,7 +137,7 @@ export default function InstallButton() {
                 </ol>
               </>
             ) : (
-              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">Use your browser's install icon or menu and choose <strong>Install BoorFam</strong> or <strong>Install app</strong>. On supported browsers, this adds BoorFam as an app on your device.</p>
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">Use your browser's install icon or menu and choose <strong>Install the app</strong> or <strong>Install app</strong>. On supported browsers, this adds as an app on your device.</p>
             )}
             <button type="button" onClick={() => setShowHelp(false)} className="mt-5 w-full rounded-xl bg-slate-100 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">Got it</button>
           </div>
