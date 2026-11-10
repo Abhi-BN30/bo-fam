@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import webpush from 'web-push';
+import { sendNotification, setVapidDetails } from 'web-push';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     );
   }
 
-  webpush.setVapidDetails(subject, publicKey, privateKey);
+  setVapidDetails(subject, publicKey, privateKey);
   const payload = JSON.stringify({
     title: 'BoorFam notifications are working! 🎉',
     body: 'This is a test notification sent to this device only.',
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   });
 
   try {
-    await webpush.sendNotification(
+    await sendNotification(
       { endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } },
       payload,
     );

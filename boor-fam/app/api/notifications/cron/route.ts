@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import webpush from 'web-push';
+import { sendNotification, setVapidDetails } from 'web-push';
 import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   if (!publicKey || !privateKey || !process.env.VAPID_SUBJECT) {
     return NextResponse.json({ error: 'Web Push VAPID environment variables are missing' }, { status: 500 });
   }
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT, publicKey, privateKey);
+  setVapidDetails(process.env.VAPID_SUBJECT, publicKey, privateKey);
 
   const today = new Date();
   const todayKey = dateKey(today);
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
           const targets = subscriptions.filter((s: any) => String(s.email).toLowerCase() === email);
           for (const sub of targets as any[]) {
             try {
-              await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
+              await sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
               sent.push(email);
             } catch (error: any) {
               if (error?.statusCode === 404 || error?.statusCode === 410) {
