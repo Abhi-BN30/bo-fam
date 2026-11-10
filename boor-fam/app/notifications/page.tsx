@@ -276,7 +276,7 @@ export default function NotificationSettingsPage() {
             <div className="rounded-xl border border-slate-100 p-4">
               <label htmlFor="reminder-days" className="block font-semibold text-slate-800">When should we remind you?</label>
               <p className="mb-3 text-xs text-slate-500">How early should we remind you?</p>
-              <select id="reminder-days" value={prefs.reminder_days} onChange={(event) => save({ ...prefs, reminder_days: Number(event.target.value) })} className="w-full rounded-xl border border-slate-200 bg-white text-black p-3 text-sm">
+              <select id="reminder-days" value={prefs.reminder_days} onChange={(event) => save({ ...prefs, reminder_days: Number(event.target.value) })} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm">
                 <option value={0}>On the day only</option>
                 <option value={1}>1 day before and on the day</option>
                 <option value={3}>3 days before and on the day</option>
