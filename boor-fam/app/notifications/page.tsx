@@ -22,12 +22,55 @@ function decodeKey(value: string) {
   return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
 }
 
+// Register the worker from the action itself instead of relying on the
+// background layout component to have finished registering it already.
+async function getActiveServiceWorker(): Promise<ServiceWorkerRegistration> {
+  if (!('serviceWorker' in navigator)) {
+    throw new Error('This browser does not support service workers.');
+  }
+
+  const registration = await navigator.serviceWorker.register('/sw.js', {
+    scope: '/',
+    updateViaCache: 'none',
+  });
+
+  if (registration.active) return registration;
+
+  const worker = registration.installing || registration.waiting;
+  if (!worker) {
+    throw new Error('The notification service could not start. Please close and reopen the app.');
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(
+      () => reject(new Error('Notification setup is taking too long. Close and reopen the app, then try again.')),
+      15000,
+    );
+
+    const checkState = () => {
+      if (worker.state === 'activated' || registration.active) {
+        window.clearTimeout(timeout);
+        resolve();
+      } else if (worker.state === 'redundant') {
+        window.clearTimeout(timeout);
+        reject(new Error('The notification service worker failed to install. Please refresh and try again.'));
+      }
+    };
+
+    worker.addEventListener('statechange', checkState);
+    checkState();
+  });
+
+  return registration;
+}
+
 export default function NotificationSettingsPage() {
   const router = useRouter();
   const [prefs, setPrefs] = useState(defaults);
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [enabling, setEnabling] = useState(false);
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState('');
   const [messageIsError, setMessageIsError] = useState(false);
@@ -99,17 +142,24 @@ export default function NotificationSettingsPage() {
   };
 
   const enable = async () => {
+    if (enabling) return;
+    setEnabling(true);
     try {
       setMessage('');
       setMessageIsError(false);
       const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!key) throw new Error('Push notification key is not configured.');
-      const permission = await Notification.requestPermission();
+      // Do not request permission again if the user has already granted it.
+      const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
       if (permission !== 'granted') {
         throw new Error('Notifications were not allowed. Check your browser settings.');
       }
-      const registration = await navigator.serviceWorker.getRegistration('/');
-      if (!registration) throw new Error('This device is still setting up notifications. Refresh the page and try again.');
+
+      // Ensure registration is complete even if the page loads before the
+      // layout-level ServiceWorker component finishes its background work.
+      const registration = await getActiveServiceWorker();
       let subscription = await registration.pushManager.getSubscription();
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
@@ -128,6 +178,8 @@ export default function NotificationSettingsPage() {
     } catch (error: any) {
       setMessage(error?.message || 'Could not enable notifications.');
       setMessageIsError(true);
+    } finally {
+      setEnabling(false);
     }
   };
 
@@ -206,7 +258,7 @@ export default function NotificationSettingsPage() {
                   <p className="font-semibold text-slate-900">Phone notifications</p>
                   <p className="text-xs text-slate-600">Allow this device to receive family reminders.</p>
                 </div>
-                <button onClick={enabled ? disable : enable} className={`rounded-full px-4 py-2 text-sm font-bold text-white ${enabled ? 'bg-slate-600' : 'bg-indigo-600'}`}>{enabled ? 'Turn off' : 'Enable'}</button>
+                <button onClick={enabled ? disable : enable} disabled={enabling} className={`rounded-full px-4 py-2 text-sm font-bold text-white disabled:opacity-60 ${enabled ? 'bg-slate-600' : 'bg-indigo-600'}`}>{enabled ? 'Turn off' : enabling ? 'Setting up…' : 'Enable'}</button>
               </div>
               <p className="mt-2 text-xs text-slate-500">Enable separately on each phone or computer.</p>
             </div>

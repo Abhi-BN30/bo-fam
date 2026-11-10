@@ -13,11 +13,11 @@ self.addEventListener("install",(event)=>{
 self.skipWaiting();
 
 event.waitUntil(
-
-caches.open(CACHE)
-
-.then(cache=>cache.addAll(FILES))
-
+  caches.open(CACHE).then(async (cache) => {
+    // A missing optional/offline route must never prevent the push worker
+    // from installing. Cache each asset independently.
+    await Promise.allSettled(FILES.map((file) => cache.add(file)));
+  })
 );
 
 });
