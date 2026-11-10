@@ -323,19 +323,19 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
           <section className="mb-5 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-widest text-indigo-700">Photo</p>
-                <p className="text-xs text-slate-500 mt-1">up to 5 MB</p>
+                <p className="text-xs font-black uppercase tracking-widest text-indigo-700">Couple photo & framing</p>
+                <p className="text-xs text-slate-500 mt-1">JPG, PNG or WebP · up to 5 MB</p>
               </div>
               {photoUrl && <button type="button" onClick={handlePhotoRemove} disabled={photoBusy} className="text-xs font-bold text-rose-600 hover:text-rose-700 disabled:opacity-50">Remove photo</button>}
             </div>
             <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { setPhotoFile(e.target.files?.[0] || null); setPhotoError(''); }} className="block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-xs file:font-semibold file:text-indigo-700" />
             {(photoPreviewUrl || photoUrl) ? (
               <>
-  
+                <p className="text-xs text-slate-600">Drag the photo and use − / + to adjust the frame. This single setting is shared by the couple card and profile header. The full original is always shown when opened.</p>
                 <ImagePositionPreview
                   src={photoPreviewUrl || photoUrl!}
-                  label="Photo preview"
-                  hint="Adjust here."
+                  label="Shared photo preview"
+                  hint="Adjust once here. The same framing is used in both places."
                   x={photoPosition.x}
                   y={photoPosition.y}
                   zoom={photoZoom}
@@ -343,9 +343,9 @@ export default function UserModal({ isOpen, onClose, onRefresh, mode, initialDat
                 />
               </>
             ) : (
-              <p className="rounded-xl border border-dashed border-indigo-200 bg-white p-4 text-center text-xs text-slate-500">Choose a photo</p>
+              <p className="rounded-xl border border-dashed border-indigo-200 bg-white p-4 text-center text-xs text-slate-500">Choose a photo to adjust its card and profile framing.</p>
             )}
-            <button type="button" onClick={handlePhotoUpload} disabled={(!photoFile && !photoUrl) || photoBusy} className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-40">{photoBusy ? 'Saving…' : photoFile ? 'Upload Photo' : 'Save Photo'}</button>
+            <button type="button" onClick={handlePhotoUpload} disabled={(!photoFile && !photoUrl) || photoBusy} className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-xs font-bold text-white disabled:opacity-40">{photoBusy ? 'Saving…' : photoFile ? 'Upload photo & save framing' : 'Save framing'}</button>
             {photoError && <p className="text-xs font-medium text-rose-600">{photoError}</p>}
           </section>
         )}

@@ -5,12 +5,14 @@ export default function ProfileDropdown({
   userEmail,
   onEditProfile,
   onEditPin,
+  onNotifications,
   onLogout,
 }: {
   userName: string;
   userEmail: string;
   onEditProfile: () => void;
   onEditPin: () => void;
+  onNotifications: () => void;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -99,6 +101,15 @@ export default function ProfileDropdown({
               <div className="font-semibold">Edit Login PIN</div>
               <div className="text-xs text-slate-500">Change your security PIN</div>
             </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setOpen(false); onNotifications(); }}
+            className="w-full flex items-center gap-3 text-left rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-900 hover:bg-amber-50 transition"
+          >
+            <span className="text-lg">🔔</span>
+            <div><div className="font-semibold">Notification Preferences</div><div className="text-xs text-slate-500">Birthdays and anniversaries</div></div>
           </button>
 
           <div className="h-px bg-slate-200 my-2"></div>

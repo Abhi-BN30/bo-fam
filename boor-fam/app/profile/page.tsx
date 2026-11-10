@@ -545,6 +545,7 @@ export default function Home() {
                   onEditPin={() => {
                     setIsPinModalOpen(true);
                   }}
+                  onNotifications={() => router.push('/notifications')}
                   onLogout={logout}
                 />
               </>
